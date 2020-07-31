@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <base href="/hooks">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hooks Example</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/assets/app.css" />
+    <style>
+        .hooks-page { padding-bottom: 40px; }
+        .hooks-page > h1 { text-align: center; }
+        .split-pane {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            row-gap: 20px;
+            column-gap: 20px;
+        }
+        .split-pane > div {
+            text-align: center;
+            background-color: #f1f1f1;
+            padding-bottom: 20px;
+        }        
+        .split-pane a {
+            color: inherit;
+        }
+        .ab-page {
+            text-align: center;
+            padding: 40px 0;
+        }
+        .popular { 
+            background-color: green!important;
+            color: white;            
+        }
+        .waves {
+            padding: 20px 0;
+        }
+        .wave i {
+            border: 1px solid #f1f1f1;
+        }
+
+    </style>
+    <script src="templates/hooks.js"></script>
+    <script src="templates/pageA.js"></script>
+    <script src="templates/pageB.js"></script>
+</head>
+<body>
+    <div class="appShell">
+        <header>
+            <nav>
+                <a href="/">🚥 WEBx</a>
+                <a href="/blog">Blog</a>
+                <a href="/about">About</a>
+                <a href="/settings">Settings</a>
+                <a href="/hooks/">Hooks</a>
+            </nav>
+        </header>
+        <div id="app"></div>
+
+        <footer>Made with ❤️ love by the 🚥 WEBx team!</footer>
+    </div>
+    <script src="/webx.umd.js"></script>
+    <script src="/plugins/webx.hooks.umd.js"></script>
+    <script>
+        let cache = {};
+
+        const app = window.webx({
+            debug: true,
+            init: () => ({ message: 'Hooks!'}),
+            routes: {
+                '/hooks/': {
+                    view: (state) => {
+                        return hooks(state);
+                    }
+                },
+                '/pagea/': {
+                    view: (state) => {
+                        return pageA(state);
+                    }
+                },
+                '/pageb/': {
+                    view: (state) => {
+                        return pageB(state);
+                    }
+                }
+            }
+        }).then(app => {
+            app.mount(document.getElementById('app'))
+                .then(app => {
+                    
+                    window.app = app;
+
+                    window.webxHooks(app, {
+                        preState: ({key, value}) => {
+                            if (key === 'ab') {
+                                localStorage.setItem('ab-testing', JSON.stringify(value));
+                            }
+                            return { key, value }
+                        },
+                        preRender: ({ view, state }) => {
+                            console.log('prerender', view, state)
+
+                            const { ab, path } = state;
+
+                            if (path.indexOf('pagea') !== -1) {
+                                app.setState('ab', { a: ab.a + 1, b: ab.b });
+                            } else if (path.indexOf('pageb') !== -1) {
+                                app.setState('ab', { a: ab.a, b: ab.b + 1});
+                            }
+
+                            return { view, state: {...state, ab: app.getState()['ab']} }
+                        },
+                        install: () => {
+                            console.log('plugin install', window.app);
+                            if (localStorage.getItem('ab-testing')) {
+                                app.setState('ab', JSON.parse(localStorage.getItem('ab-testing')))
+                                app.refresh();
+                            } else {
+                                app.setState('ab', { a: 0, b: 0 });
+                            }
+                        }
+                    });
+
+                })
+        })
+    </script>
+</body>
+</html>

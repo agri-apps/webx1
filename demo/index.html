@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <base href="/demo">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="WEBx, the blazing fast web tool">
+    <title>Webx Demo</title>
+    <link rel="preconnect" href="https://jsonplaceholder.typicode.com">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="/assets/app.css" />
+    <style>        
+        .logo {
+            background-color: #ccc;
+            color: #333;
+            border-radius: 13px;
+        }
+
+        .blog-posts {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            column-gap: 20px;
+            row-gap: 20px;
+        }
+
+        .blog-page img {
+            margin-top: 20px;
+            object-fit: cover;
+            width: 100%;
+            height: 200px;
+        }
+
+        .home-page {
+            display: grid;
+            place-items: center;
+            padding: 30px auto;
+        }
+
+        .blog-page {
+            border-color: blue;
+        }
+
+        .about-page {
+            border-color: orange;
+        }
+
+        .settings-page {
+            border-color: red;
+        }
+    </style>
+    <script src="templates/about.js" async></script>
+    <script src="templates/blog.js" async></script>
+    <script src="templates/settings.js" async></script>
+    <script src="templates/blogpost.js" async></script>
+
+</head>
+
+<body>
+    <div class="appshell">
+        <header>
+            <nav>
+                <a href="/" onclick="$.navigate('/'); return false">🚥 WEBx</a>
+                <a href="/blog" onclick="$.navigate('/blog'); return false">Blog</a>
+                <a href="/about" onclick="$.navigate('/about');return false">About</a>
+                <a href="/settings" onclick="$.navigate('/settings');return false">Settings</a>
+                <a href="/hooks">Hooks</a>
+            </nav>
+        </header>
+        <div id="app"></div>
+        <footer>Made with ❤️ love by the 🚥 WEBx team!</footer>
+    </div>
+    <script src="typewriter.js"></script>
+    <script src="/webx.umd.js"></script>
+    <script>
+        const app = window.webx({
+            debug: true,
+            init: async () => {
+                try {
+                    const res = await fetch('https://jsonplaceholder.typicode.com/posts/');
+                    const posts = await res.json();
+
+                    return { posts: posts.slice(0, 6), message: '🚥 WEBx rocks!' }
+                } catch (e) {
+                    return { postsError: 'Unable to fetch posts', message: 'Rocks' }
+                }
+            },
+            routes: {
+                '/': {
+                    view: ({ message }) => `<div class="page home-page"><h1></h1></div>`,
+                    init: ({ message }) => {
+                        let typer = window.typewriter(message, 50),
+                            h1 = document.querySelector('h1');
+                        typer.typeIt(h1);
+                    },
+                    meta: { title: 'Home' }
+                },
+                '/blog': {
+                    view: (state) => blog(state),
+                    meta: { title: 'Blog' }
+                },
+                '/blog/:id': {
+                    unmount: ({ setState, getState }) => {
+                        setState('currentPost', undefined);
+                        console.log('unmounted', getState());
+                    },
+                    view: (state) => blogpost(state),
+                    init: ({ params, posts = [] }, { refresh, setState, getState }, el) => {
+
+                        setState('sid', new Date().getTime());
+
+                        if (params.id) {
+                            let post = posts.filter(x => x.id === parseInt(params.id))[0];
+                            if (post) {
+                                setState('currentPost', post);
+                                // simulate delay
+                                setTimeout(() => {
+                                    el.innerHTML = blogpost(getState())
+                                }, 1000)
+
+                            }
+                        }
+                    },
+                    meta: { title: 'Post' }
+                },
+                '/about': {
+                    view: () => about,
+                    meta: { title: 'About Us' }
+                },
+                '/settings': {
+                    view: () => settings,
+                    init: (state, { setState }, el) => {
+                        let $inp = el.querySelector('input[name="message"]');
+                        $inp.value = state['message'];
+
+                        $inp.addEventListener('change', function (e) {
+                            e.preventDefault();
+                            setState('message', e.target.value);
+                        });
+                    },
+                    meta: { title: 'Settings' }
+                }
+            }
+        })
+            .then(res => {
+                res.mount(document.getElementById('app'))
+                    .then(app => {
+                        console.log('app', app);
+                        window.app = app;
+
+                        app.listen(function (type, ...rest) {
+                            console.log('state change', type, rest)
+
+                        });
+                    })
+            })
+    </script>
+
+</body>
+
+</html>

@@ -1,0 +1,69 @@
+html,
+body {
+  font-family: "Roboto", sans-serif;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+*,
+*:after,
+*:before {
+  box-sizing: content-box;
+}
+
+header,
+#app,
+footer {
+  padding: 6px 12px;
+}
+
+header nav {
+  display: flex;
+  align-items: center;
+}
+
+header nav a {
+  text-decoration: none;
+  padding: 4px 8px;
+  border-radius: 8px;
+}
+
+header nav a.active {
+  background-color: #ccc;
+}
+
+.appshell {
+  height: 100%;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+}
+
+footer {
+  padding: 20px 12px;
+  background-color: #f1f1f1;
+  text-align: center;
+}
+
+form label {
+  display: block;
+  padding: 4px 0 12px 0;
+}
+
+form input[type="text"] {
+  padding: 4px 12px;
+}
+
+.card {
+  padding: 10px;
+  box-shadow: 0 0 2px rgba(0, 0, 0, 0.9);
+}
+
+.page {
+  height: 100%;
+  border-top: 5px solid green;
+}
+
+footer {
+  border-top: 2px solid #ddd;
+}
