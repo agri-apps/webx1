@@ -276,6 +276,8 @@ export default async (options) => {
           await app.navigate(pathName);
         };
 
+        window[opts.global].dispatch = app.dispatch.bind(app);
+
         await app.navigate(window.location.pathname);
 
         return app;
