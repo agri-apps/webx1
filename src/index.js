@@ -62,6 +62,7 @@ export default async (options) => {
       });      
     },
     replaceState: (newState) => {
+      let oldState = Object.freeze(JSON.parse(JSON.stringify(app._state)));
       app._state = newState;
       app._listeners.forEach((listener) => {
         listener("stateChange", newState, oldState, "*", newState);
