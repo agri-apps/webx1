@@ -1,11 +1,11 @@
 {
   "name": "webx1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "",
   "source": "src/index.js",
-  "main": "dist/webx.js",
-  "module": "dist/webx.module.js",
-  "unpkg": "dist/webx.umd.js",
+  "main": "dist/webx1.js",
+  "module": "dist/webx1.module.js",
+  "unpkg": "dist/webx1.umd.js",
   "files": [
     "dist",
     "dist/plugins"
@@ -16,7 +16,7 @@
     "build:plugins": "./scripts/build-plugins.sh",
     "clean": "rm -rf dist",
     "dev": "microbundle watch",
-    "copy:assets": "cp dist/webx*.umd* demo/ && cp dist/plugins/* demo/plugins",
+    "copy:assets": "cp dist/webx1*.umd* demo/ && cp dist/plugins/* demo/plugins",
     "serve": "live-server ./demo --port=8080 --entry-file=index.html",
     "demo": "npm run build && npm run copy:assets && npm run serve",
     "prepublish": "npm run build",

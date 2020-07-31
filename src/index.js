@@ -10,7 +10,7 @@ if (typeof window !== "undefined") {
   window.appRules = rules;
 }
 
-export default createApp = async (options) => {
+export default async (options) => {
   let opts = Object.assign({}, defaultOptions, options);
 
   let cache = {
