@@ -73,7 +73,7 @@
     <script src="typewriter.js"></script>
     <script src="/webx1.umd.js"></script>
     <script>
-        const app = window.webx({
+        const app = window.webx1({
             debug: true,
             init: async () => {
                 try {
@@ -102,7 +102,6 @@
                 '/blog/:id': {
                     unmount: ({ setState, getState }) => {
                         setState('currentPost', undefined);
-                        console.log('unmounted', getState());
                     },
                     view: (state) => blogpost(state),
                     init: ({ params, posts = [] }, { refresh, setState, getState }, el) => {
@@ -145,12 +144,10 @@
             .then(res => {
                 res.mount(document.getElementById('app'))
                     .then(app => {
-                        console.log('app', app);
                         window.app = app;
 
                         app.listen(function (type, ...rest) {
                             console.log('state change', type, rest)
-
                         });
                     })
             })

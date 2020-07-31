@@ -46,7 +46,12 @@ export default async (options) => {
     _listeners: [],
     routes: { ...cache.routes },
     ok: true,
-    getState: () => ({ ...app._state }),
+    getState: (...args) => {
+      if (args.length) {
+        return app._state[args[0]];
+      }
+      return ({ ...app._state });
+    },
     setState: (key, value) => {
       let oldState = Object.freeze(JSON.parse(JSON.stringify(app._state)));
       app._state[key] = value;
@@ -54,17 +59,18 @@ export default async (options) => {
       // change listeners
       app._listeners.forEach((listener) => {
         listener("stateChange", newState, oldState, key, value);
+      });      
+    },
+    replaceState: (newState) => {
+      app._state = newState;
+      app._listeners.forEach((listener) => {
+        listener("stateChange", newState, oldState, "*", newState);
       });
-      let evt = new CustomEvent("appStateChanged", {
-        detail: {
-          type: "stateChange",
-          newState,
-          oldState,
-          key: key,
-          value: value,
-        },
-      });
-      app.el.dispatchEvent(evt);
+    },
+    dispatch: (type, ...args) => {
+      app._listeners.forEach(listener => {
+        listener.apply(null, [type, ...args]);
+      })
     },
     listen: (handler) => {
       if (rules.isFunc(handler)) {
@@ -95,8 +101,6 @@ export default async (options) => {
         return;
       }
 
-      console.log("async view", rules.isAsyncFunc(view));
-
       if (rules.isAsyncFunc(view)) {
         try {
           app.el.innerHTML = await view(state);
@@ -124,12 +128,12 @@ export default async (options) => {
       const proxy = {
         setState: app.setState,
         getState: app.getState,
+        dispatch: app.dispatch,
         refresh: app.refresh,
       };
 
       const setRoute = async (path, xtra = {}) => {       
 
-        console.log("routes", path, routes);
         let route = routes[path];        
 
         if (!route) {
@@ -153,7 +157,6 @@ export default async (options) => {
         // Render view
         try {
           await app.renderView(route.view, state, route.meta);
-          console.log("view rendered", app.el.innerHTML);
         } catch (err) {
           console.error(err);
         }
@@ -249,7 +252,6 @@ export default async (options) => {
           app._state = rules.isAsyncFunc(opts.init)
             ? await opts.init()
             : opts.init();
-          console.log("func app state", app._state);
         } else {
           app._state = opts.init || {};
         }

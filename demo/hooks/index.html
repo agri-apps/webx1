@@ -64,7 +64,7 @@
     <script>
         let cache = {};
 
-        const app = window.webx({
+        const app = window.webx1({
             debug: true,
             init: () => ({ message: 'Hooks!'}),
             routes: {
@@ -90,7 +90,7 @@
                     
                     window.app = app;
 
-                    window.webxHooks(app, {
+                    window.webx1Hooks(app, {
                         preState: ({key, value}) => {
                             if (key === 'ab') {
                                 localStorage.setItem('ab-testing', JSON.stringify(value));

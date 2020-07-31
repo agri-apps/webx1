@@ -1,4 +1,3 @@
-import { extend } from "./../utils";
 import rules from "./../utils/rules";
 
 export default (app, options = {}) => {
