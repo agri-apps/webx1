@@ -7,7 +7,7 @@ let blog = ({ posts }) => `<div class="page blog-page">
         ${posts
           .map(
             (post) => `<div class="card">
-        <h2>${post.title}</h2><p>${post.body}</p><a onclick="$.navigate('/blog/${post.id}'); return false;" href="/blog/${post.id}">Read more</a></div>`
+        <h2>${post.title}</h2><p>${post.body}</p><a data-route="post" href="/blog/${post.id}">Read more</a></div>`
           )
           .join("")}</div>`
     }

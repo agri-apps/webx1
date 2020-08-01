@@ -1,6 +1,6 @@
 {
   "name": "webx1",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "",
   "source": "src/index.js",
   "main": "dist/webx1.js",
@@ -11,12 +11,11 @@
     "dist/plugins"
   ],
   "scripts": {
-    "build": "npm run clean && npm run build:main && npm run build:plugins",
+    "build": "npm run clean && npm run build:main",
     "build:main": "microbundle",
-    "build:plugins": "./scripts/build-plugins.sh",
     "clean": "rm -rf dist",
     "dev": "microbundle watch",
-    "copy:assets": "cp dist/webx1*.umd* demo/ && cp dist/plugins/* demo/plugins",
+    "copy:assets": "cp dist/webx1*.umd* demo/",
     "serve": "live-server ./demo --port=8080 --entry-file=index.html",
     "demo": "npm run build && npm run copy:assets && npm run serve",
     "prepublish": "npm run build",

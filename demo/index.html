@@ -2,21 +2,26 @@
 <html lang="en">
 
 <head>
-    <base href="/demo">
+    <base href="/">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="WEBx, the blazing fast web tool">
-    <title>Webx Demo</title>
+    <title>Webx v1 Demo</title>
     <link rel="preconnect" href="https://jsonplaceholder.typicode.com">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="/assets/app.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" async>
+    <link rel="stylesheet" type="text/css" href="/assets/app.css" async />
     <style>        
         .logo {
             background-color: #ccc;
             color: #333;
             border-radius: 13px;
         }
-
+        .version  {
+            font-size: .75em;
+            background-color: #f1f1f1;
+            padding: 1px 3px;
+            border-radius: 5px;
+        }
         .blog-posts {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -48,11 +53,24 @@
         .settings-page {
             border-color: red;
         }
+        .active--blue {
+            background-color: blue;
+            color: white;
+        }
+        .active--orange {
+            background-color: orange;
+            color: white;
+        }
+        .active--red {
+            background-color: red;
+            color: white;
+        }
     </style>
     <script src="templates/about.js" async></script>
     <script src="templates/blog.js" async></script>
     <script src="templates/settings.js" async></script>
     <script src="templates/blogpost.js" async></script>
+    <script src="templates/plugins.js" async></script>
 
 </head>
 
@@ -60,11 +78,11 @@
     <div class="appshell">
         <header>
             <nav>
-                <a href="/" onclick="$.navigate('/'); return false">🚥 WEBx</a>
-                <a href="/blog" onclick="$.navigate('/blog'); return false">Blog</a>
-                <a href="/about" onclick="$.navigate('/about');return false">About</a>
-                <a href="/settings" onclick="$.navigate('/settings');return false">Settings</a>
-                <a href="/hooks">Hooks</a>
+                <a href="/" data-route="home">🚥 WEBx <span class="version">v1</span></a>
+                <a href="/blog" data-route="blog">Blog</a>
+                <!-- Uses the anchor-plugin for routing -->
+                <a href="/about" data-route="about">About</a>
+                <a href="/settings" data-route="settings">Settings</a>             
             </nav>
         </header>
         <div id="app"></div>
@@ -72,6 +90,7 @@
     </div>
     <script src="typewriter.js"></script>
     <script src="/webx1.umd.js"></script>
+    <script src="plugins/anchor-plugin.js"></script>
     <script>
         const app = window.webx1({
             debug: true,
@@ -93,11 +112,15 @@
                             h1 = document.querySelector('h1');
                         typer.typeIt(h1);
                     },
-                    meta: { title: 'Home' }
+                    name: 'home',                    
+                    meta: { title: 'Home' },
+                    activeClass: '__none__'
                 },
                 '/blog': {
                     view: (state) => blog(state),
-                    meta: { title: 'Blog' }
+                    name: 'blog',
+                    meta: { title: 'Blog' },
+                    activeClass: 'active--blue'
                 },
                 '/blog/:id': {
                     unmount: ({ setState, getState }) => {
@@ -120,11 +143,19 @@
                             }
                         }
                     },
-                    meta: { title: 'Post' }
+                    name: 'post',
+                    root: 'blog',
+                    meta: { title: 'Post' },
+                    activeClass: 'active--blue'
                 },
                 '/about': {
                     view: () => about,
-                    meta: { title: 'About Us' }
+                    init: () => {
+                        console.log('init about');
+                    },
+                    name: 'about',
+                    meta: { title: 'About Us' },
+                    activeClass: 'active--orange'
                 },
                 '/settings': {
                     view: () => settings,
@@ -137,11 +168,15 @@
                             setState('message', e.target.value);
                         });
                     },
-                    meta: { title: 'Settings' }
+                    name: 'settings',
+                    meta: { title: 'Settings' },
+                    activeClass: 'active--red'
                 }
-            }
+            },
+            metaTitlePrepend: 'WEBx 🚥 '
         })
             .then(res => {
+                res.use(anchorPlugin, { scope: 'body', activeClassName: 'active' })
                 res.mount(document.getElementById('app'))
                     .then(app => {
                         window.app = app;

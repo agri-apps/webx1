@@ -3,6 +3,7 @@ import rules from "./utils/rules";
 const defaultOptions = {
   global: "$",
   appName: "App",
+  metaTitlePrepend: '',
   routes: {},
 };
 
@@ -38,12 +39,22 @@ export default async (options) => {
     cache.routes = opts.routes;
   }
 
+  const getProxy = (app) => {
+    return {
+      setState: app.setState,
+      getState: app.getState,
+      dispatch: app.dispatch,
+      refresh: app.refresh,
+    };
+  } 
+
   const app = {
     el: document.body,
     _currentPath: null,
     _currentRoute: null,
     _state: {},
     _listeners: [],
+    _plugins: {},
     routes: { ...cache.routes },
     ok: true,
     getState: (...args) => {
@@ -113,7 +124,24 @@ export default async (options) => {
       }
 
       if (meta) {
-        document.title = meta.title;
+        document.title = `${opts.metaTitlePrepend}${meta.title}`;
+      }
+    },
+    initRoute: async (route, state) => {
+
+      const proxy = getProxy(app);
+
+      if (rules.isFunc(route.init)) {
+        if (rules.isAsyncFunc(route.init)) {
+          await route.init(state, proxy, app.el);
+        } else {
+          route.init(state, proxy, app.el);
+        }
+      }
+    },
+    unmountRoute: (route) => {
+      if (route && rules.isFunc(route.unmount)) {
+        route.unmount(getProxy(app));
       }
     },
     navigate: async (pathName, force) => {
@@ -125,13 +153,6 @@ export default async (options) => {
       app._currentPath = pathName;
       let query = {};
       let params = {};
-
-      const proxy = {
-        setState: app.setState,
-        getState: app.getState,
-        dispatch: app.dispatch,
-        refresh: app.refresh,
-      };
 
       const setRoute = async (path, xtra = {}) => {       
 
@@ -163,13 +184,7 @@ export default async (options) => {
         }
 
         // Initialize route
-        if (rules.isFunc(route.init)) {
-          if (rules.isAsyncFunc(route.init)) {
-            await route.init(state, proxy, app.el);
-          } else {
-            route.init(state, proxy, app.el);
-          }
-        }
+        await app.initRoute(route, state);
 
         const { params = {} } = xtra;
 
@@ -187,10 +202,7 @@ export default async (options) => {
 
       // Unmount current route, if any
       if (app._currentRoute) {
-        let route = app.routes[app._currentRoute];
-        if (route && rules.isFunc(route.unmount)) {
-          route.unmount(proxy);
-        }
+        app.unmountRoute(app.routes[app._currentRoute]);        
       }
 
       // exact match
@@ -224,9 +236,32 @@ export default async (options) => {
       setRoute("/notfound");
       return { path: pathName, route: undefined, query, params };
     },
+    boot: async () => {
+      // intended to be monkey patched in plugins.
+    }
   };
 
-  return {
+  const proxy = {
+    use: (plugin, options = {}) => {
+      if (!plugin.name) {
+        throw new Error('A plugin must have a name property.');
+      }
+      if (!plugin.install || !rules.isFunc(plugin.install)) {
+        throw new Error('A plugin must define an install method.');
+      }
+      if (app._plugins[plugin.name]) {
+        throw new Error(`A plugin with the name: "${plugin.name} is already registered."`);
+      }
+      app._plugins[plugin.name] = plugin;
+      try {
+        plugin.install(app, options);
+      } catch (err) {
+        console.error(`Plugin "${plugin.name}" failed to install.`, err);
+        delete app._plugins[plugin.name];
+      }
+
+      return proxy;
+    },
     mount: async (el) => {
       try {
         if (rules.isString(el)) {
@@ -280,10 +315,14 @@ export default async (options) => {
 
         await app.navigate(window.location.pathname);
 
+        await app.boot();
+
         return app;
       } catch (e) {
         return { ok: false, error: e };
       }
     },
   };
+
+  return proxy;
 };
