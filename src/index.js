@@ -1,15 +1,11 @@
-import rules from "./utils/rules";
+import rules from './utils/rules'
 
 const defaultOptions = {
   global: "$",
   appName: "App",
-  metaTitlePrepend: '',
+  metaTitlePrepend: "",
   routes: {},
 };
-
-if (typeof window !== "undefined") {
-  window.appRules = rules;
-}
 
 export default async (options) => {
   let opts = Object.assign({}, defaultOptions, options);
@@ -46,7 +42,7 @@ export default async (options) => {
       dispatch: app.dispatch,
       refresh: app.refresh,
     };
-  } 
+  };
 
   const app = {
     el: document.body,
@@ -61,7 +57,7 @@ export default async (options) => {
       if (args.length) {
         return app._state[args[0]];
       }
-      return ({ ...app._state });
+      return { ...app._state };
     },
     setState: (key, value) => {
       let oldState = Object.freeze(JSON.parse(JSON.stringify(app._state)));
@@ -70,7 +66,7 @@ export default async (options) => {
       // change listeners
       app._listeners.forEach((listener) => {
         listener("stateChange", newState, oldState, key, value);
-      });      
+      });
     },
     replaceState: (newState) => {
       let oldState = Object.freeze(JSON.parse(JSON.stringify(app._state)));
@@ -80,9 +76,9 @@ export default async (options) => {
       });
     },
     dispatch: (type, ...args) => {
-      app._listeners.forEach(listener => {
+      app._listeners.forEach((listener) => {
         listener.apply(null, [type, ...args]);
-      })
+      });
     },
     listen: (handler) => {
       if (rules.isFunc(handler)) {
@@ -128,7 +124,6 @@ export default async (options) => {
       }
     },
     initRoute: async (route, state) => {
-
       const proxy = getProxy(app);
 
       if (rules.isFunc(route.init)) {
@@ -154,9 +149,8 @@ export default async (options) => {
       let query = {};
       let params = {};
 
-      const setRoute = async (path, xtra = {}) => {       
-
-        let route = routes[path];        
+      const setRoute = async (path, xtra = {}) => {
+        let route = routes[path];
 
         if (!route) {
           route = routes["/notfound"] || {
@@ -202,7 +196,7 @@ export default async (options) => {
 
       // Unmount current route, if any
       if (app._currentRoute) {
-        app.unmountRoute(app.routes[app._currentRoute]);        
+        app.unmountRoute(app.routes[app._currentRoute]);
       }
 
       // exact match
@@ -221,7 +215,7 @@ export default async (options) => {
         );
       })[0];
 
-      if (found) {        
+      if (found) {
         found
           .split("/")
           .slice(2)
@@ -238,19 +232,21 @@ export default async (options) => {
     },
     boot: async () => {
       // intended to be monkey patched in plugins.
-    }
+    },
   };
 
   const proxy = {
     use: (plugin, options = {}) => {
       if (!plugin.name) {
-        throw new Error('A plugin must have a name property.');
+        throw new Error("A plugin must have a name property.");
       }
       if (!plugin.install || !rules.isFunc(plugin.install)) {
-        throw new Error('A plugin must define an install method.');
+        throw new Error("A plugin must define an install method.");
       }
       if (app._plugins[plugin.name]) {
-        throw new Error(`A plugin with the name: "${plugin.name} is already registered."`);
+        throw new Error(
+          `A plugin with the name: "${plugin.name} is already registered."`
+        );
       }
       app._plugins[plugin.name] = plugin;
       try {
@@ -279,11 +275,6 @@ export default async (options) => {
         }
 
         if (rules.isFunc(opts.init)) {
-          opts.debug &&
-            console.log(
-              "App state from function. Is async: ",
-              rules.isAsyncFunc(opts.init) ? "yes" : "no"
-            );
           // try to just invoke function;
           app._state = rules.isAsyncFunc(opts.init)
             ? await opts.init()
@@ -313,9 +304,9 @@ export default async (options) => {
 
         window[opts.global].dispatch = app.dispatch.bind(app);
 
-        await app.navigate(window.location.pathname);
-
         await app.boot();
+
+        await app.navigate(window.location.pathname);
 
         return app;
       } catch (e) {

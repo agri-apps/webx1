@@ -181,6 +181,8 @@
                     .then(app => {
                         window.app = app;
 
+                        console.log('app', app);
+
                         app.listen(function (type, ...rest) {
                             console.log('state change', type, rest)
                         });
