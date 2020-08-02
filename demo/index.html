@@ -116,6 +116,7 @@
             },
             routeInit: (route, state) => {
                 // runs before every route is rendered..
+                // dyanmic views are not mounted yet!
                 let renderTimeEl = document.querySelector('#renderTime');
                 const date = new Date();
                 const time = date.toLocaleTimeString("en-US", {

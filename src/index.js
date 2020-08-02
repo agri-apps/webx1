@@ -44,12 +44,28 @@ export default async (options) => {
   }
 
   const getProxy = (app) => {
-    return {
+
+    let builtins = {
       setState: app.setState,
       getState: app.getState,
       dispatch: app.dispatch,
+      listen: app.listen,
       refresh: app.refresh,
     };
+
+    // Add plugin api's to proxy
+    return Object.keys(app._plugins).reduce((prev, next) => {
+      let plugin = app._plugins[next];
+      if (plugin.api) {
+        let ref = plugin.global ? plugin.global : plugin.name;
+        if (!prev[ref]) {
+          prev[ref] = plugin.api;
+        } else {
+          prev[ref] = Object.assign(prev[ref], plugin.api);
+        }
+      }
+      return prev;
+    }, builtins);
   };
 
   const app = {
@@ -91,6 +107,12 @@ export default async (options) => {
     listen: (handler) => {
       if (rules.isFunc(handler)) {
         app._listeners.push(handler);
+        return () => {
+          let idx = app._listeners.indexOf(handler);
+          if (idx !== -1) {
+            app._listeners.splice(idx, 1);
+          }
+        }
       } else {
         console.error("Listen handler must be a function", handler);
       }
@@ -287,7 +309,18 @@ export default async (options) => {
       }
       app._plugins[plugin.name] = plugin;
       try {
-        plugin.install(app, options);
+        let api = plugin.install(app, options);
+        if (api) {
+          app._plugins[plugin.name].api = api;
+          // Add to window global
+          if(plugin.global) {
+            if (!window[plugin.global]) {
+              window[plugin.global] = api;
+            } else {
+              window[plugin.global] = Object.assign(window[plugin.global], api);
+            }
+          }
+        }
       } catch (err) {
         console.error(`Plugin "${plugin.name}" failed to install.`, err);
         delete app._plugins[plugin.name];
@@ -328,6 +361,7 @@ export default async (options) => {
           await app.navigate(window.location.pathname);
         };
 
+        app.global = opts.global;
         window[opts.global] = window[opts.global] || {};
 
         window[opts.global].navigate = async (pathName) => {

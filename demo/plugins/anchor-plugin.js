@@ -4,7 +4,8 @@
 */
 let anchorPlugin = {
   name: "anchorPlugin",
-  install: (app, options, cache) => {
+  global: '$',
+  install: (app, options) => {
     let opts = Object.assign({ activeClassName: "active " }, options);
     
     let origInitRoute = app.initRoute;
@@ -84,6 +85,13 @@ let anchorPlugin = {
             anchor.dataset['activeClass'] = cls; 
           }
         }
+      }
+    }
+
+    // API to return
+    return {
+      getRouteElements: () => {
+        return [].slice.call(rootEl.querySelectorAll("[data-route]"));
       }
     }
   },
