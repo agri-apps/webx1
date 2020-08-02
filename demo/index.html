@@ -65,18 +65,27 @@
             background-color: red;
             color: white;
         }
+        .relative {
+            position: relative;
+        }
+        #renderTime {
+            font-size: .8em;
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            color: #ccc;
+        }
     </style>
     <script src="templates/about.js" async></script>
     <script src="templates/blog.js" async></script>
     <script src="templates/settings.js" async></script>
     <script src="templates/blogpost.js" async></script>
-    <script src="templates/plugins.js" async></script>
 
 </head>
 
 <body>
     <div class="appshell">
-        <header>
+        <header class="relative">
             <nav>
                 <a href="/" data-route="home">🚥 WEBx <span class="version">v1</span></a>
                 <a href="/blog" data-route="blog">Blog</a>
@@ -84,6 +93,7 @@
                 <a href="/about" data-route="about">About</a>
                 <a href="/settings" data-route="settings">Settings</a>             
             </nav>
+            <span id="renderTime">rendered @</span>
         </header>
         <div id="app"></div>
         <footer>Made with ❤️ love by the 🚥 WEBx team!</footer>
@@ -103,6 +113,17 @@
                 } catch (e) {
                     return { postsError: 'Unable to fetch posts', message: 'Rocks' }
                 }
+            },
+            routeInit: (route, state) => {
+                // runs before every route is rendered..
+                let renderTimeEl = document.querySelector('#renderTime');
+                const date = new Date();
+                const time = date.toLocaleTimeString("en-US", {
+                    hour: "numeric",
+                    minute: "2-digit",
+                    second: "2-digit"
+                });
+                renderTimeEl.textContent = `rendered @ ${time}`;
             },
             routes: {
                 '/': {
@@ -181,11 +202,11 @@
                     .then(app => {
                         window.app = app;
 
-                        console.log('app', app);
-
+                        /*                         
                         app.listen(function (type, ...rest) {
                             console.log('state change', type, rest)
                         });
+                        */
                     })
             })
     </script>

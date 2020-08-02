@@ -1,10 +1,12 @@
-import rules from './utils/rules'
+import rules from "./utils/rules";
 
 const defaultOptions = {
   global: "$",
   appName: "App",
   metaTitlePrepend: "",
   routes: {},
+  notFoundRouteName: "notfound",
+  notFoundUrl: "/notfound",
 };
 
 export default async (options) => {
@@ -14,6 +16,12 @@ export default async (options) => {
     routes: {
       "/": () => ({
         view: `<div>Webx Rocks!</div>`,
+      }),
+      notfound: () => ({
+        view: `<div>404 Not Found!</div>`,
+      }),
+      error: () => ({
+        view: "<div>An error has occurred!</div>",
       }),
     },
   };
@@ -88,7 +96,7 @@ export default async (options) => {
       }
     },
     refresh: () => {
-      app.navigate(app._currentPath, true);
+      app.navigate(app._currentPath, true, true);
     },
     renderView: async (view, state, meta) => {
       if (!rules.isFunc(view)) {
@@ -139,7 +147,16 @@ export default async (options) => {
         route.unmount(getProxy(app));
       }
     },
-    navigate: async (pathName, force) => {
+    routeInit: async (route, state) => {
+      if (opts.routeInit && rules.isFunc(opts.routeInit)) {
+        if (rules.isAsyncFunc(opts.routeInit)) {
+          await opts.routeInit(route, state);
+        } else {
+          opts.routeInit(route, state);
+        }
+      }
+    },
+    navigate: async (pathName, force, refreshOnly) => {
       // don't fire same route unless forced
       if (!force && app._currentPath && app._currentPath === pathName) {
         return false;
@@ -170,33 +187,53 @@ export default async (options) => {
           }, {});
         let state = { ...app.getState(), ...xtra, query, path };
 
+        // Pre-render hook
+        if (!refreshOnly) {
+          try {
+            await app.routeInit(route, state);
+          } catch (err) {
+            console.error("Pre-render failed:", err);
+          }
+        }
+
         // Render view
         try {
           await app.renderView(route.view, state, route.meta);
         } catch (err) {
-          console.error(err);
+          console.error("Render view failed", err);
         }
 
         // Initialize route
-        await app.initRoute(route, state);
+        try {
+          await app.initRoute(route, state);
+        } catch (err) {
+          console.error(
+            `Init route for "${route.name ? route.name : path}" failed`,
+            err
+          );
+        }
 
         const { params = {} } = xtra;
 
-        app._listeners.forEach((listener) => {
-          listener("pageChange", {
-            from: prevPath,
-            to: app._currentRoute,
-            params,
-            query,
+        if (!refreshOnly) {
+          app._listeners.forEach((listener) => {
+            listener("pageChange", {
+              from: prevPath,
+              to: app._currentRoute,
+              params,
+              query,
+            });
           });
-        });
+        }
       };
 
       const { routes } = app;
 
       // Unmount current route, if any
-      if (app._currentRoute) {
-        app.unmountRoute(app.routes[app._currentRoute]);
+      if (!refreshOnly) {
+        if (app._currentRoute) {
+          app.unmountRoute(app.routes[app._currentRoute]);
+        }
       }
 
       // exact match
@@ -226,12 +263,12 @@ export default async (options) => {
         return { path: pathName, route: found, query, params };
       }
       // Not found
-      app._currentRoute = "notfound";
-      setRoute("/notfound");
+      app._currentRoute = opts.notFoundRouteName;
+      setRoute(opts.notFoundUrl);
       return { path: pathName, route: undefined, query, params };
     },
     boot: async () => {
-      // intended to be monkey patched in plugins.
+      // Runs on startup. Intended to be monkey patched in plugins.
     },
   };
 
