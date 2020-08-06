@@ -237,7 +237,10 @@ export default async (options) => {
         // Pre-render hook
         if (!refreshOnly) {
           try {
-            await app.routeInit(route, state);
+            let routeState = await app.routeInit(route, state);
+            if (routeState && !rules.isEmptyObject(routeState)) {
+              state = {...state, routeState};
+            }
           } catch (err) {
             console.error("Pre-render failed:", err);
           }
