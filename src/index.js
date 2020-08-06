@@ -351,9 +351,7 @@ export default async (options) => {
 
       if (rules.isFunc(opts.init)) {
         // try to just invoke function;
-        app._state = rules.isAsyncFunc(opts.init)
-          ? await opts.init()
-          : opts.init();
+        app._state = await opts.init();
       } else {
         app._state = opts.init || {};
       }
