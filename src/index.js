@@ -165,27 +165,19 @@ export default async (options) => {
       }
 
       if (app.el.renderView && rules.isFunc(app.el.renderView)) {
-        if (rules.isAsyncFunc(app.el.renderView)) {
-          try {
-            await app.el.renderView(view, state, meta);
-          } catch (err) {
-            console.error("render async view error", err);
-          }
-        } else {
-          app.el.renderView(view, state, meta);
+        try {
+          await app.el.renderView(view, state, meta);
+        } catch (err) {
+          console.error("render async view error", err);
         }
 
         return;
       }
 
-      if (rules.isAsyncFunc(view)) {
-        try {
-          app.el.innerHTML = await view(state);
-        } catch (err) {
-          console.error("Render view errror", err);
-        }
-      } else {
-        app.el.innerHTML = view(state);
+      try {
+        app.el.innerHTML = await view(state);
+      } catch (err) {
+        console.error("Render view errror", err);
       }
 
       if (meta) {
@@ -198,11 +190,7 @@ export default async (options) => {
       const proxy = getProxy(app);
 
       if (rules.isFunc(route.init)) {
-        if (rules.isAsyncFunc(route.init)) {
-          await route.init(state, proxy, app.el);
-        } else {
-          route.init(state, proxy, app.el);
-        }
+        await route.init(state, proxy, app.el);
       }
     },
     unmountRoute: (route) => {
@@ -212,11 +200,7 @@ export default async (options) => {
     },
     routeInit: async (route, state) => {
       if (opts.routeInit && rules.isFunc(opts.routeInit)) {
-        if (rules.isAsyncFunc(opts.routeInit)) {
-          await opts.routeInit(route, state);
-        } else {
-          opts.routeInit(route, state);
-        }
+        await opts.routeInit(route, state);
       }
     },
     navigate: async (pathName, force, refreshOnly) => {
