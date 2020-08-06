@@ -67,3 +67,11 @@ form input[type="text"] {
 footer {
   border-top: 2px solid #ddd;
 }
+
+.spinner {
+  font-size: 2em;
+  color: #ddd;
+  display: grid;
+  place-items: center;
+  padding: 80px 0;
+}

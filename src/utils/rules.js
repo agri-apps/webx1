@@ -1,4 +1,7 @@
 const rules = {
+    isArray: (o) => {
+        return Array.isArray(o);
+    },
     isString: (o) => {
       return o !== null && typeof o === "string";
     },

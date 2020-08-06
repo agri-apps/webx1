@@ -5,6 +5,7 @@
 let anchorPlugin = {
   name: "anchorPlugin",
   global: '$',
+  namespace: 'anchors',
   install: (app, options) => {
     let opts = Object.assign({ activeClassName: "active " }, options);
     
@@ -16,6 +17,7 @@ let anchorPlugin = {
 
     app.initRoute = async (route, state) => {
       await origInitRoute(route, state);
+      console.log('init route plugin', app.ctx)
       const routeMap = Object.keys(app.routes).reduce((prev, curr) => {
         let rt = app.routes[curr];
         if (rt.name) {
@@ -39,7 +41,8 @@ let anchorPlugin = {
 
         anchor.addEventListener("click", (e) => {
           e.preventDefault();
-          let { path, activeClass, root } = routeMap[e.target.dataset["route"]];
+          
+          let { path, activeClass, root } = (routeMap[e.target.dataset["route"]] || {});
           if (path) {
             let href = e.target.href;
             let currPath = href.replace(window.location.origin, '');

@@ -44,7 +44,6 @@ export default async (options) => {
   }
 
   const getProxy = (app) => {
-
     let builtins = {
       setState: app.setState,
       getState: app.getState,
@@ -57,7 +56,7 @@ export default async (options) => {
     return Object.keys(app._plugins).reduce((prev, next) => {
       let plugin = app._plugins[next];
       if (plugin.api) {
-        let ref = plugin.global ? plugin.global : plugin.name;
+        let ref = plugin.namespace ? plugin.namespace : plugin.name;
         if (!prev[ref]) {
           prev[ref] = plugin.api;
         } else {
@@ -77,6 +76,45 @@ export default async (options) => {
     _plugins: {},
     routes: { ...cache.routes },
     ok: true,
+    plugin: (plugin, options = {}) => {
+      if (!plugin.name) {
+        throw new Error("A plugin must have a name property.");
+      }
+      if (!plugin.install || !rules.isFunc(plugin.install)) {
+        throw new Error("A plugin must define an install method.");
+      }
+      if (app._plugins[plugin.name]) {
+        throw new Error(
+          `A plugin with the name: "${plugin.name} is already registered."`
+        );
+      }
+      app._plugins[plugin.name] = plugin;
+      try {
+        let api = plugin.install(app, options);
+        if (api) {
+          app._plugins[plugin.name].api = api;
+          // Add to window global
+          if (plugin.global) {
+            if (!window[plugin.global]) {
+              window[plugin.global] = api;
+            } else {
+              window[plugin.global] = Object.assign(window[plugin.global], api);
+            }
+          }
+          // Update app context
+          app.ctx = getProxy(app);
+        }
+        if (options.installed && rules.isFunc(options.installed)) {
+          options.installed();
+        }
+      } catch (err) {
+        console.error(`Plugin "${plugin.name}" failed to install.`, err);
+        if (options.onError && rules.isFunc(options.onError)) {
+          options.onError(err);
+        }
+        delete app._plugins[plugin.name];
+      }
+    },
     getState: (...args) => {
       if (args.length) {
         return app._state[args[0]];
@@ -112,13 +150,14 @@ export default async (options) => {
           if (idx !== -1) {
             app._listeners.splice(idx, 1);
           }
-        }
+        };
       } else {
         console.error("Listen handler must be a function", handler);
       }
     },
     refresh: () => {
-      app.navigate(app._currentPath, true, true);
+      app.navigate(app._currentPath, true, true)
+        .then(() => app.dispatch('refreshed', app._currentPath))      
     },
     renderView: async (view, state, meta) => {
       if (!rules.isFunc(view)) {
@@ -152,6 +191,8 @@ export default async (options) => {
       if (meta) {
         document.title = `${opts.metaTitlePrepend}${meta.title}`;
       }
+
+      app.dispatch('view-rendered', { detail: view });
     },
     initRoute: async (route, state) => {
       const proxy = getProxy(app);
@@ -294,97 +335,76 @@ export default async (options) => {
     },
   };
 
-  const proxy = {
-    use: (plugin, options = {}) => {
-      if (!plugin.name) {
-        throw new Error("A plugin must have a name property.");
-      }
-      if (!plugin.install || !rules.isFunc(plugin.install)) {
-        throw new Error("A plugin must define an install method.");
-      }
-      if (app._plugins[plugin.name]) {
-        throw new Error(
-          `A plugin with the name: "${plugin.name} is already registered."`
-        );
-      }
-      app._plugins[plugin.name] = plugin;
-      try {
-        let api = plugin.install(app, options);
-        if (api) {
-          app._plugins[plugin.name].api = api;
-          // Add to window global
-          if(plugin.global) {
-            if (!window[plugin.global]) {
-              window[plugin.global] = api;
-            } else {
-              window[plugin.global] = Object.assign(window[plugin.global], api);
-            }
-          }
+  const mount = async (el) => {
+    try {
+      if (rules.isString(el)) {
+        app.el = document.querySelector(el);
+        if (!app.el) {
+          throw new Error(`Invalid mount target: ${el}. Missing from the DOM.`);
         }
-      } catch (err) {
-        console.error(`Plugin "${plugin.name}" failed to install.`, err);
-        delete app._plugins[plugin.name];
+      } else {
+        if (!rules.isNode(el) || !rules.isElement(el)) {
+          throw new Error("Invalid DOM object for mount.");
+        }
+        app.el = el;
       }
 
-      return proxy;
-    },
-    mount: async (el) => {
-      try {
-        if (rules.isString(el)) {
-          app.el = document.querySelector(el);
-          if (!app.el) {
-            throw new Error(
-              `Invalid mount target: ${el}. Missing from the DOM.`
-            );
-          }
-        } else {
-          if (!rules.isNode(el) || !rules.isElement(el)) {
-            throw new Error("Invalid DOM object for mount.");
-          }
-          app.el = el;
-        }
+      if (rules.isFunc(opts.init)) {
+        // try to just invoke function;
+        app._state = rules.isAsyncFunc(opts.init)
+          ? await opts.init()
+          : opts.init();
+      } else {
+        app._state = opts.init || {};
+      }
 
-        if (rules.isFunc(opts.init)) {
-          // try to just invoke function;
-          app._state = rules.isAsyncFunc(opts.init)
-            ? await opts.init()
-            : opts.init();
-        } else {
-          app._state = opts.init || {};
-        }
+      if (opts.debug) {
+        console.log("Initial app state", app._state);
+      }
 
-        if (opts.debug) {
-          console.log("Initial app state", app._state);
-        }
-
-        window.onpopstate = async () => {
-          await app.navigate(window.location.pathname);
-        };
-
-        app.global = opts.global;
-        window[opts.global] = window[opts.global] || {};
-
-        window[opts.global].navigate = async (pathName) => {
-          window.history.pushState(
-            {},
-            pathName,
-            window.location.origin + pathName
-          );
-          await app.navigate(pathName);
-        };
-
-        window[opts.global].dispatch = app.dispatch.bind(app);
-
-        await app.boot();
-
+      window.onpopstate = async () => {
         await app.navigate(window.location.pathname);
+      };
 
-        return app;
-      } catch (e) {
-        return { ok: false, error: e };
-      }
-    },
+      app.global = opts.global;
+      window[opts.global] = window[opts.global] || {};
+
+      window[opts.global].navigate = async (pathName) => {
+        window.history.pushState(
+          {},
+          pathName,
+          window.location.origin + pathName
+        );
+        await app.navigate(pathName);
+      };
+
+      window[opts.global].dispatch = app.dispatch.bind(app);
+
+      await app.boot();
+
+      await app.navigate(window.location.pathname);
+
+      return app;
+    } catch (e) {
+      return { ok: false, error: e };
+    }
   };
 
-  return proxy;
+  app.el = opts.node || document.body;
+
+  // Expects plugins in array format plugins: [[plugin1, options1], [plugin2, options2]]
+  if (opts.plugins && rules.isArray(opts.plugins)) {
+    opts.plugins.forEach((plugin) => {
+      app.plugin(plugin[0], plugin.length > 1 ? plugin[1] : {});
+    });
+  }
+
+  // set the app context
+  app.ctx = getProxy(app);
+
+  if (opts.node && (rules.isElement(opts.node) || rules.isNode(opts.node))) {
+    return mount(opts.node);
+  }
+
+  return mount(document.body);
 };

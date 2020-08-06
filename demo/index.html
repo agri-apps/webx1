@@ -8,8 +8,8 @@
     <meta name="description" content="WEBx, the blazing fast web tool">
     <title>Webx v1 Demo</title>
     <link rel="preconnect" href="https://jsonplaceholder.typicode.com">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="stylesheet" async>
-    <link rel="stylesheet" type="text/css" href="/assets/app.css" async />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link rel="preload" as="style" href="/assets/app.css" onload="this.onload=null;this.rel='stylesheet'" />
     <style>        
         .logo {
             background-color: #ccc;
@@ -73,7 +73,7 @@
             position: absolute;
             top: 16px;
             right: 20px;
-            color: #ccc;
+            color: #666;
         }
     </style>
     <script src="templates/about.js" async></script>
@@ -98,9 +98,9 @@
         <div id="app"></div>
         <footer>Made with ❤️ love by the 🚥 WEBx team!</footer>
     </div>
-    <script src="typewriter.js"></script>
     <script src="/webx1.umd.js"></script>
     <script src="plugins/anchor-plugin.js"></script>
+    <script src="plugins/typer-plugin.js"></script>
     <script>
         const app = window.webx1({
             debug: true,
@@ -129,10 +129,9 @@
             routes: {
                 '/': {
                     view: ({ message }) => `<div class="page home-page"><h1></h1></div>`,
-                    init: ({ message }) => {
-                        let typer = window.typewriter(message, 50),
-                            h1 = document.querySelector('h1');
-                        typer.typeIt(h1);
+                    init: ({ message }, ctx) => {
+                        // type plugin call
+                        ctx.typer.typeIt(document.querySelector('h1'), message, 50);
                     },
                     name: 'home',                    
                     meta: { title: 'Home' },
@@ -149,7 +148,7 @@
                         setState('currentPost', undefined);
                     },
                     view: (state) => blogpost(state),
-                    init: ({ params, posts = [] }, { refresh, setState, getState }, el) => {
+                    init: ({ params, posts = [] }, { typer, refresh, setState, getState }, el) => {
 
                         setState('sid', new Date().getTime());
 
@@ -159,8 +158,9 @@
                                 setState('currentPost', post);
                                 // simulate delay
                                 setTimeout(() => {
-                                    el.innerHTML = blogpost(getState())
-                                }, 1000)
+                                    el.innerHTML = blogpost(getState());
+                                    typer.run();
+                                }, 1500)
 
                             }
                         }
@@ -172,9 +172,6 @@
                 },
                 '/about': {
                     view: () => about,
-                    init: () => {
-                        console.log('init about');
-                    },
                     name: 'about',
                     meta: { title: 'About Us' },
                     activeClass: 'active--orange'
@@ -195,21 +192,22 @@
                     activeClass: 'active--red'
                 }
             },
-            metaTitlePrepend: 'WEBx 🚥 '
+            metaTitlePrepend: 'WEBx 🚥 ',
+            plugins: [
+                [anchorPlugin, { scope: 'body', activeClassName: 'active' }],
+                [typerPlugin, { speed: 50 } ]
+            ],
+            node: document.getElementById('app')
         })
-            .then(res => {
-                res.use(anchorPlugin, { scope: 'body', activeClassName: 'active' })
-                res.mount(document.getElementById('app'))
-                    .then(app => {
-                        window.app = app;
-
-                        /*                         
-                        app.listen(function (type, ...rest) {
-                            console.log('state change', type, rest)
-                        });
-                        */
-                    })
-            })
+        .then(app => {
+            window.app = app;
+           
+            /*                         
+            app.listen(function (type, ...rest) {
+                console.log('state change', type, rest)
+            });
+            */
+        })
     </script>
 
 </body>
