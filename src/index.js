@@ -34,7 +34,13 @@ export default async (options) => {
       if (opts.routes.hasOwnProperty(x)) {
         let route = opts.routes[x];        
         if (rules.isFunc(route)) {
-          route = (await route()).then(m => m.default ? m.default : m);
+          route = await route() || { view: () => `<div>???</div>`, name: 'missing' }
+          // default export check
+          if (!route.view) {
+            if (route.default) {
+              route = route.default;
+            }
+          }
         }
         if (!route.view) {
           routeErrors[x] = [`A view property is required for route "${x}"`];
