@@ -13,47 +13,82 @@ export default async (options) => {
   let opts = Object.assign({}, defaultOptions, options);
 
   let cache = {
+    views: {},
+    _routes: {},
     routes: {
       "/": () => ({
         view: `<div>Webx Rocks!</div>`,
       }),
-      notfound: () => ({
+      ["/notfound"]: () => ({
         view: `<div>404 Not Found!</div>`,
       }),
-      error: () => ({
+      ["/error"]: () => ({
         view: "<div>An error has occurred!</div>",
       }),
     },
   };
 
   // routes  
-  if (!rules.isEmptyObject(opts.routes)) {
-    // prevalidate routes
-    let routeErrors = {};
-    for (var x in opts.routes) {
-      if (opts.routes.hasOwnProperty(x)) {
-        let route = opts.routes[x];        
-        if (rules.isFunc(route)) {
-          route = await route() || { view: () => `<div>???</div>`, name: 'missing' }
-          // default export check
-          if (!route.view) {
-            if (route.default) {
-              route = route.default;
-            }
-          }
-        }
-        if (!route.view) {
-          routeErrors[x] = [`A view property is required for route "${x}"`];
-        }
-      }
+  // if (!rules.isEmptyObject(opts.routes)) {
+  //   // prevalidate routes
+  //   let routeErrors = {};
+  //   for (var x in opts.routes) {
+  //     if (opts.routes.hasOwnProperty(x)) {
+  //       let route = opts.routes[x];        
+  //       if (rules.isFunc(route)) {
+  //         route = await route() || { view: () => `<div>???</div>`, name: 'missing' }
+  //         // default export check
+  //         if (!route.view) {
+  //           if (route.default) {
+  //             route = route.default;
+  //           }
+  //         }
+  //       }
+  //       if (!route.view) {
+  //         routeErrors[x] = [`A view property is required for route "${x}"`];
+  //       }
+  //     }
+  //   }
+  //   if (Object.keys(routeErrors).length) {
+  //     if (opts.debug) {
+  //       Object.values(routeErrors).forEach(val => console.error(val));
+  //     }
+  //     throw new Error("Invalid route configuration", routeErrors);
+  //   }    
+  //}
+  cache.routes = Object.assign({}, cache.routes, opts.routes);
+
+  const getRoute = async route => {
+    if (opts.debug) {
+      console.log(`Resolving route`, route, rules.isString(route));
     }
-    if (Object.keys(routeErrors).length) {
-      if (opts.debug) {
-        Object.values(routeErrors).forEach(val => console.error(val));
+    let rt = route;
+    if (rules.isString(route)) {
+      if (cache._routes[route]) {
+        opts.debug ? console.log(`${route} resolved from cache.`) : null;
+        return cache._routes[route];
       }
-      throw new Error("Invalid route configuration", routeErrors);
+
+      rt = cache.routes[route];
     }
-    cache.routes = opts.routes;
+
+    if (!rules.isFunc(rt)) {
+      cache._routes[route] = rt;
+      return rt;
+    }
+
+    let current = await rt();
+
+    if (!current) {
+      return null;
+    }
+
+    if (current.default) {
+      cache._routes
+    }
+
+    cache._routes[route] = current.default ? current.default : current;
+    return cache._routes[route];
   }
 
   const getProxy = (app) => {
@@ -215,19 +250,22 @@ export default async (options) => {
     },
     initRoute: async (route, state) => {
       const proxy = getProxy(app);
+      let rt = await getRoute(route);
 
-      if (rules.isFunc(route.init)) {
-        await route.init(state, proxy, app.el);
+      if (rules.isFunc(rt.init)) {
+        await rt.init(state, proxy, app.el);
       }
     },
-    unmountRoute: (route) => {
-      if (route && rules.isFunc(route.unmount)) {
-        route.unmount(getProxy(app));
+    unmountRoute: async (route) => {
+      let rt = await getRoute(route);
+      if (rt && rules.isFunc(rt.unmount)) {
+        rt.unmount(getProxy(app));
       }
     },
     routeInit: async (route, state) => {
+      let rt = await getRoute(route);
       if (opts.routeInit && rules.isFunc(opts.routeInit)) {
-        await opts.routeInit(route, state);
+        await opts.routeInit(rt, state);
       }
     },
     navigate: async (pathName, force, refreshOnly) => {
@@ -241,9 +279,9 @@ export default async (options) => {
       let params = {};
 
       const setRoute = async (path, xtra = {}) => {
-        let route = routes[path];
+        let route = await getRoute(path);
 
-        if (!route) {
+        if (route === null) {
           route = routes["/notfound"] || {
             view: () => `<div class="page">404 Not Found</div>`,
           };
@@ -304,25 +342,25 @@ export default async (options) => {
         }
       };
 
-      const { routes } = app;
+      //const { routes } = app;
 
       // Unmount current route, if any
       if (!refreshOnly) {
         if (app._currentRoute) {
-          app.unmountRoute(app.routes[app._currentRoute]);
+          app.unmountRoute(await getRoute(app._currentRoute));
         }
       }
 
       // exact match
-      if (routes[pathName]) {
+      if (await getRoute(pathName)) {
         app._currentRoute = pathName;
-        setRoute(pathName);
+        await setRoute(pathName);
         return { path: pathName, route: pathName, query, params };
       }
 
       // param route w/fuzzy match logic
       let tokens = pathName.split("/").slice(1);
-      let found = Object.keys(routes).filter((x) => {
+      let found = Object.keys(cache.routes).filter((x) => {
         return (
           x.indexOf(`/${tokens[0]}`) !== -1 &&
           x.split("/").slice(1).length === tokens.length
@@ -336,12 +374,12 @@ export default async (options) => {
           .forEach((n, x) => {
             params[n.slice(1)] = tokens[x + 1];
           });
-        setRoute(found, { params });
+        await setRoute(found, { params });
         return { path: pathName, route: found, query, params };
       }
       // Not found
       app._currentRoute = opts.notFoundRouteName;
-      setRoute(opts.notFoundUrl);
+      await setRoute(opts.notFoundUrl);
       return { path: pathName, route: undefined, query, params };
     },
     boot: async () => {
