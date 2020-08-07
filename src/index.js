@@ -1,6 +1,7 @@
 import rules from "./utils/rules";
 
 const defaultOptions = {
+  debug: false,
   global: "$",
   appName: "App",
   metaTitlePrepend: "",
@@ -60,12 +61,12 @@ export default async (options) => {
 
   const getRoute = async route => {
     if (opts.debug) {
-      console.log(`Resolving route`, route, rules.isString(route));
+      console.log(`[debug] Resolving route`, route, rules.isString(route));
     }
     let rt = route;
     if (rules.isString(route)) {
       if (cache._routes[route]) {
-        opts.debug ? console.log(`${route} resolved from cache.`) : null;
+        opts.debug ? console.log(`[debug] ${route} resolved from cache.`) : null;
         return cache._routes[route];
       }
 
@@ -116,6 +117,7 @@ export default async (options) => {
   };
 
   const app = {
+    debug: opts.debug,
     el: document.body,
     _currentPath: null,
     _currentRoute: null,
@@ -124,7 +126,7 @@ export default async (options) => {
     _plugins: {},
     routes: { ...cache.routes },
     ok: true,
-    plugin: (plugin, options = {}) => {
+    plugin: async (plugin, options = {}) => {
       if (!plugin.name) {
         throw new Error("A plugin must have a name property.");
       }
@@ -138,8 +140,8 @@ export default async (options) => {
       }
       app._plugins[plugin.name] = plugin;
       try {
-        let api = plugin.install(app, options);
-        opts.debug ? console.log(`Plugin "${plugin.name}" installed.`) : null
+        let api = await plugin.install(app, options);
+        opts.debug ? console.log(`[debug] Plugin "${plugin.name}" installed.`) : null
         if (api) {
           app._plugins[plugin.name].api = api;
           // Add to window global
@@ -154,7 +156,7 @@ export default async (options) => {
           app.ctx = getProxy(app);
         }
         if (options.installed && rules.isFunc(options.installed)) {
-          options.installed();
+          await options.installed(plugin.name, api);
         }
       } catch (err) {
         console.error(`Plugin "${plugin.name}" failed to install.`, err);
@@ -411,7 +413,7 @@ export default async (options) => {
       }
 
       if (opts.debug) {
-        console.log("Initial app state", app._state);
+        console.log("[debug] Initial app state", app._state);
       }
 
       window.onpopstate = async () => {
@@ -446,8 +448,8 @@ export default async (options) => {
 
   // Expects plugins in array format plugins: [[plugin1, options1], [plugin2, options2]]
   if (opts.plugins && rules.isArray(opts.plugins)) {
-    opts.plugins.forEach((plugin) => {
-      app.plugin(plugin[0], plugin.length > 1 ? plugin[1] : {});
+    opts.plugins.forEach(async (plugin) => {
+      await app.plugin(plugin[0], plugin.length > 1 ? plugin[1] : {});
     });
   }
 

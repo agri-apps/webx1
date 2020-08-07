@@ -1,6 +1,6 @@
 {
   "name": "webx1",
-  "version": "1.0.17",
+  "version": "1.0.18",
   "description": "Simple and fast web applications",
   "source": "src/index.js",
   "main": "dist/webx1.js",
@@ -14,11 +14,12 @@
   "scripts": {
     "build": "npm run clean && npm run build:main",
     "build:main": "microbundle",
+    "build:plugins": "microbundle -i src/plugins/index.js -o demo/scripts/plugins.js --no-pkg-main -f umd",
     "clean": "rm -rf dist",
     "dev": "microbundle watch",
     "copy:assets": "cp dist/webx1*.umd* demo/",
     "serve": "live-server ./demo --port=8080 --entry-file=index.html",
-    "demo": "npm run build && npm run copy:assets && npm run serve",
+    "demo": "npm run build && npm run build:plugins && npm run copy:assets && npm run serve",
     "prepublish": "npm run build",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

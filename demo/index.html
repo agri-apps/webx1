@@ -99,8 +99,7 @@
         <footer>Made with ❤️ love by the 🚥 WEBx team!</footer>
     </div>
     <script src="/webx1.umd.js"></script>
-    <script src="plugins/anchor-plugin.js"></script>
-    <script src="plugins/typer-plugin.js"></script>
+    <script src="scripts/plugins.js"></script>
     <script>
         const app = window.webx1({
             debug: true,
@@ -125,6 +124,8 @@
                     second: "2-digit"
                 });
                 renderTimeEl.textContent = `rendered @ ${time}`;
+
+
             },
             routes: {
                 '/': {
@@ -174,7 +175,12 @@
                     view: () => about,
                     name: 'about',
                     meta: { title: 'About Us' },
-                    activeClass: 'active--orange'
+                    activeClass: 'active--orange',
+                    init: async (state, ctx, el) => {
+                        ctx.template.ready('lorem', (tmpl) => {
+                            el.querySelector('#lorem').innerHTML = ['blue', 'orange','red'].map(x => tmpl({color: x})).join('');
+                        })
+                    }
                 },
                 '/settings': {
                     view: () => settings,
@@ -194,14 +200,18 @@
             },
             metaTitlePrepend: 'WEBx 🚥 ',
             plugins: [
-                [anchorPlugin, { scope: 'body', activeClassName: 'active' }],
-                [typerPlugin, { speed: 50 } ]
+                [window.webx1NavPlugin, { scope: 'body', activeClassName: 'active' }],
+                [window.webx1TyperPlugin, { speed: 50 } ],
+                [window.webx1TemplaterPlugin, {
+                    installed: async (name, api) => {
+                        await api.registerFromUrl('lorem', 'partials/lorem.html');
+                    }
+                }]
             ],
             node: document.getElementById('app')
         })
         .then(app => {
             window.app = app;
-           
             /*                         
             app.listen(function (type, ...rest) {
                 console.log('state change', type, rest)

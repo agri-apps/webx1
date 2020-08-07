@@ -1,11 +1,10 @@
 const defaultOptions = { speed: 100 };
 
-let typerPlugin = {
-  name: "typer",
+export default {
+  name: "webx1TyperPlugin",
   global: "$",
   namespace: "typer",
   install: (app, options = {}) => {
-    console.log('installing typer plugin', JSON.stringify(Object.keys(app._plugins)));
     let opts = Object.assign({}, defaultOptions, options);
     let rootEl = opts.scope ? document.querySelector(opts.scope) : app.el;
     let origInitRoute = app.initRoute;
