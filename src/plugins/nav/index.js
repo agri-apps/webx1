@@ -1,3 +1,4 @@
+import { addClass, removeClass } from './../../utils/dom';
 /*
  * Example plugin that hightlights anchors based on extra route data.
  * See routes in index.html for configuration.
@@ -58,7 +59,7 @@ export default {
                 if (activeClass) {
                   anchor.dataset["activeClass"] = activeClass;
                 }
-                anchor.classList.add(activeClass || opts.activeClassName);
+                addClass(activeClass || opts.activeClassName, anchor);
               }
             }
           });
@@ -69,9 +70,8 @@ export default {
         origUnmountRoute.call(app, route, state);
         [].slice
           .call(rootEl.querySelectorAll("a[data-route]"))
-          .forEach((link) => {
-            let cls = link.dataset["activeClass"] || opts.activeClassName;
-            link.classList.remove(cls);
+          .forEach((link) => { 
+            removeClass(link.dataset["activeClass"] || opts.activeClassName, link);
           });
       };
   
@@ -88,7 +88,7 @@ export default {
             let anchor = rootEl.querySelector(`[data-route="${routeName}"]`);
             if (anchor) {
               let cls = currentRoute.activeClass || opts.activeClassName;
-              anchor.classList.add(cls);
+              addClass(cls, anchor);
               anchor.dataset["activeClass"] = cls;
             }
           }

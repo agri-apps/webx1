@@ -1,6 +1,6 @@
 {
   "name": "webx1",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "description": "Simple and fast web applications",
   "source": "src/index.js",
   "main": "dist/webx1.js",
