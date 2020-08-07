@@ -26,13 +26,17 @@ export default async (options) => {
     },
   };
 
-  // routes
+  // routes  
   if (!rules.isEmptyObject(opts.routes)) {
     // prevalidate routes
     let routeErrors = {};
     for (var x in opts.routes) {
       if (opts.routes.hasOwnProperty(x)) {
-        if (!opts.routes[x].view) {
+        let route = opts.routes[x];        
+        if (rules.isFunc(route)) {
+          route = await route();
+        }
+        if (!route.view) {
           routeErrors[x] = [`A view property is required for route "${x}"`];
         }
       }
