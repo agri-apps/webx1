@@ -34,7 +34,7 @@ export default async (options) => {
       if (opts.routes.hasOwnProperty(x)) {
         let route = opts.routes[x];        
         if (rules.isFunc(route)) {
-          route = await route();
+          route = (await route()).then(m => m.default ? m.default : m);
         }
         if (!route.view) {
           routeErrors[x] = [`A view property is required for route "${x}"`];
@@ -42,6 +42,9 @@ export default async (options) => {
       }
     }
     if (Object.keys(routeErrors).length) {
+      if (opts.debug) {
+        Object.values(routeErrors).forEach(val => console.error(val));
+      }
       throw new Error("Invalid route configuration", routeErrors);
     }
     cache.routes = opts.routes;
@@ -164,17 +167,30 @@ export default async (options) => {
         .then(() => app.dispatch('refreshed', app._currentPath))      
     },
     renderView: async (view, state, meta) => {
+      let customRender = app.el.renderView && rules.isFunc(app.el.renderView);
+
+      // Non function views
+      if (!rules.isFunc(view)) {
+        if (customRender) {
+          app.el.renderView(view, state, meta);
+        } else {
+          app.el.innerHTML = `${view}`;
+        }
+        app.dispatch('view-rendered', { detail: { view, meta } });
+        return;
+      }
+
       if (!rules.isFunc(view)) {
         throw new Error("renderView requires a function.");
       }
 
-      if (app.el.renderView && rules.isFunc(app.el.renderView)) {
+      if (customRender) {
         try {
           await app.el.renderView(view, state, meta);
         } catch (err) {
           console.error("render async view error", err);
+          app.dispatch('view-render-failed', { detail: view, error: err });
         }
-
         return;
       }
 
@@ -182,13 +198,14 @@ export default async (options) => {
         app.el.innerHTML = await view(state);
       } catch (err) {
         console.error("Render view errror", err);
+        app.dispatch('view-render-failed', { detail: view, error: err });
       }
 
       if (meta) {
         document.title = `${opts.metaTitlePrepend}${meta.title}`;
       }
 
-      app.dispatch('view-rendered', { detail: view });
+      app.dispatch('view-rendered', { detail: { view, meta } });
     },
     initRoute: async (route, state) => {
       const proxy = getProxy(app);
