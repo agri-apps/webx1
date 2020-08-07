@@ -1,14 +1,15 @@
 {
   "name": "webx1",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "description": "Simple and fast web applications",
   "source": "src/index.js",
   "main": "dist/webx1.js",
   "module": "dist/webx1.module.js",
   "unpkg": "dist/webx1.umd.js",
   "files": [
+    "src",
     "dist",
-    "dist/plugins"
+    "demo/plugins"
   ],
   "scripts": {
     "build": "npm run clean && npm run build:main",

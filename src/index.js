@@ -139,6 +139,7 @@ export default async (options) => {
       app._plugins[plugin.name] = plugin;
       try {
         let api = plugin.install(app, options);
+        opts.debug ? console.log(`Plugin "${plugin.name}" installed.`) : null
         if (api) {
           app._plugins[plugin.name].api = api;
           // Add to window global
@@ -163,6 +164,7 @@ export default async (options) => {
         delete app._plugins[plugin.name];
       }
     },
+    getRoute,
     getState: (...args) => {
       if (args.length) {
         return app._state[args[0]];

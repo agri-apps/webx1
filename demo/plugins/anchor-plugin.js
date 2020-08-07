@@ -1,14 +1,14 @@
 /*
-* Example plugin that hightlights anchors based on extra route data.
-* See routes in index.html for configuration.
-*/
+ * Example plugin that hightlights anchors based on extra route data.
+ * See routes in index.html for configuration.
+ */
 let anchorPlugin = {
   name: "anchorPlugin",
-  global: '$',
-  namespace: 'anchors',
+  global: "$",
+  namespace: "anchors",
   install: (app, options) => {
     let opts = Object.assign({ activeClassName: "active " }, options);
-    
+
     let origInitRoute = app.initRoute;
     let origUnmountRoute = app.unmountRoute;
     let origBoot = app.boot;
@@ -17,7 +17,6 @@ let anchorPlugin = {
 
     app.initRoute = async (route, state) => {
       await origInitRoute(route, state);
-      console.log('init route plugin', app.ctx)
       const routeMap = Object.keys(app.routes).reduce((prev, curr) => {
         let rt = app.routes[curr];
         if (rt.name) {
@@ -41,11 +40,12 @@ let anchorPlugin = {
 
         anchor.addEventListener("click", (e) => {
           e.preventDefault();
-          
-          let { path, activeClass, root } = (routeMap[e.target.dataset["route"]] || {});
+
+          let { path, activeClass, root } =
+            routeMap[e.target.dataset["route"]] || {};
           if (path) {
             let href = e.target.href;
-            let currPath = href.replace(window.location.origin, '');
+            let currPath = href.replace(window.location.origin, "");
 
             window.history.pushState({}, currPath, href);
             app.navigate(e.target.pathname);
@@ -77,25 +77,29 @@ let anchorPlugin = {
 
     app.boot = async () => {
       await origBoot.call(app);
-      if (app._currentRoute) {
-        let currentRoute = app.routes[app._currentRoute];
+      let pathname = window.location.pathname;
+
+      if (pathname) {
+        let currentRoute = await app.getRoute(pathname);
         if (currentRoute && currentRoute.name) {
-          let routeName = currentRoute.root ? currentRoute.root : currentRoute.name;
+          let routeName = currentRoute.root
+            ? currentRoute.root
+            : currentRoute.name;
           let anchor = rootEl.querySelector(`[data-route="${routeName}"]`);
           if (anchor) {
             let cls = currentRoute.activeClass || opts.activeClassName;
             anchor.classList.add(cls);
-            anchor.dataset['activeClass'] = cls; 
+            anchor.dataset["activeClass"] = cls;
           }
         }
       }
-    }
+    };
 
     // API to return
     return {
       getRouteElements: () => {
         return [].slice.call(rootEl.querySelectorAll("[data-route]"));
-      }
-    }
+      },
+    };
   },
 };
