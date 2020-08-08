@@ -4,7 +4,9 @@ let blogpost = ({ currentPost, sid }) => `<div class="page blog-page">
       currentPost
         ? `<div>
             <img src="https://source.unsplash.com/random?q=${sid}">
-            <h1>${currentPost.title}</h1><p>${currentPost.body}</p>
+            <h1>${currentPost.title}</h1>
+            <p>${currentPost.body}</p>
+            <div class="author"><button class="button">Author info</button></div>
             <a href="/blog" onclick="$.navigate('/blog');return false" data-typer="Back to blog"></a>
         </div>`
         : ""

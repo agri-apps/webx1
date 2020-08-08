@@ -75,3 +75,12 @@ footer {
   place-items: center;
   padding: 80px 0;
 }
+.author {
+  padding: 20px 0;
+}
+.button {
+  border: none;
+  background-color: steelblue;
+  color: white;
+  padding: 8px 16px;
+}

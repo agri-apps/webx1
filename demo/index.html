@@ -10,7 +10,13 @@
     <link rel="preconnect" href="https://jsonplaceholder.typicode.com">
     <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" as="style" href="/assets/app.css" onload="this.onload=null;this.rel='stylesheet'" />
-    <style>        
+    <link rel="preload" as="style" href="/assets/modal.css" onload="this.onload=null;this.rel='stylesheet'" />
+    <style>   
+        :root {
+            --modal-width: 400px;
+            --modal-border-radius: 8px;
+            --modal-backdrop-color: steelblue;
+        }     
         .logo {
             background-color: #ccc;
             color: #333;
@@ -43,7 +49,7 @@
         }
 
         .blog-page {
-            border-color: blue;
+            border-color: steelblue;
         }
 
         .about-page {
@@ -54,7 +60,7 @@
             border-color: red;
         }
         .active--blue {
-            background-color: blue;
+            background-color: steelblue;
             color: white;
         }
         .active--orange {
@@ -96,7 +102,7 @@
             <span id="renderTime">rendered @</span>
         </header>
         <div id="app"></div>
-        <footer>Made with ❤️ love by the 🚥 WEBx team!</footer>
+        <footer onclick="alert(JSON.stringify(window.app.getState()));">Made with ❤️ love by the 🚥 WEBx team!</footer>
     </div>
     <script src="/webx1.umd.js"></script>
     <script src="scripts/plugins.js"></script>
@@ -145,26 +151,19 @@
                     activeClass: 'active--blue'
                 },
                 '/blog/:id': {
-                    unmount: ({ setState, getState }) => {
-                        setState('currentPost', undefined);
-                    },
                     view: (state) => blogpost(state),
-                    init: ({ params, posts = [] }, { typer, refresh, setState, getState }, el) => {
+                    init: (state, ctx, el) => {
+                        let btn = el.querySelector('.author button');
+                        btn.addEventListener('click', () => {
 
-                        setState('sid', new Date().getTime());
-
-                        if (params.id) {
-                            let post = posts.filter(x => x.id === parseInt(params.id))[0];
-                            if (post) {
-                                setState('currentPost', post);
-                                // simulate delay
-                                setTimeout(() => {
-                                    el.innerHTML = blogpost(getState());
-                                    typer.run();
-                                }, 1500)
-
-                            }
-                        }
+                            fetch(`https://jsonplaceholder.typicode.com/users/${state.params.id}`)
+                                .then(res => res.json())
+                                .then(data => {
+                                    ctx.modal.show(ctx.template.render('author', data), (modalEl, {close}) => {
+                                        modalEl.querySelector('.ok').addEventListener('click', close)
+                                    })
+                                })
+                        })
                     },
                     name: 'post',
                     root: 'blog',
@@ -205,9 +204,25 @@
                 [window.webx1TemplaterPlugin, {
                     installed: async (name, api) => {
                         await api.registerFromUrl('lorem', 'partials/lorem.html');
+                        api.register('author', `<div class="author-info">
+                            <p><%=page.name%>, <%=page.address.city%></p>
+                            <button class="button ok">OK</button>
+                        </div>`);
                     }
-                }]
+                }],
+                [window.webx1ModalPlugin, {}]
             ],
+            computed: {
+                'sid': [() => new Date().getTime()],
+                'currentPost': [(state, route) => {
+                    if (route && route.name === 'post') {
+                        let post = state.posts.filter(x => x.id === parseInt(route.params.id))[0];
+                        return post;
+                    }
+    
+                    return null;
+                }]
+            },
             node: document.getElementById('app')
         })
         .then(app => {

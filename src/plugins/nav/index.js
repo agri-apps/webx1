@@ -8,7 +8,7 @@ export default {
     global: "$",
     namespace: "nav",
     install: (app, options) => {
-      let opts = Object.assign({ activeClassName: "active " }, options);
+      let opts = Object.assign({ activeClassName: "active" }, options);
   
       let origInitRoute = app.initRoute;
       let origUnmountRoute = app.unmountRoute;

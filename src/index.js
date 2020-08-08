@@ -16,6 +16,7 @@ export default async (options) => {
   let cache = {
     views: {},
     _routes: {},
+    _computed: {},
     routes: {
       "/": () => ({
         view: `<div>Webx Rocks!</div>`,
@@ -29,13 +30,13 @@ export default async (options) => {
     },
   };
 
-  // routes  
+  // routes
   // if (!rules.isEmptyObject(opts.routes)) {
   //   // prevalidate routes
   //   let routeErrors = {};
   //   for (var x in opts.routes) {
   //     if (opts.routes.hasOwnProperty(x)) {
-  //       let route = opts.routes[x];        
+  //       let route = opts.routes[x];
   //       if (rules.isFunc(route)) {
   //         route = await route() || { view: () => `<div>???</div>`, name: 'missing' }
   //         // default export check
@@ -55,18 +56,20 @@ export default async (options) => {
   //       Object.values(routeErrors).forEach(val => console.error(val));
   //     }
   //     throw new Error("Invalid route configuration", routeErrors);
-  //   }    
+  //   }
   //}
   cache.routes = Object.assign({}, cache.routes, opts.routes);
 
-  const getRoute = async route => {
+  const getRoute = async (route) => {
     if (opts.debug) {
       console.log(`[debug] Resolving route`, route, rules.isString(route));
     }
     let rt = route;
     if (rules.isString(route)) {
       if (cache._routes[route]) {
-        opts.debug ? console.log(`[debug] ${route} resolved from cache.`) : null;
+        opts.debug
+          ? console.log(`[debug] ${route} resolved from cache.`)
+          : null;
         return cache._routes[route];
       }
 
@@ -85,12 +88,12 @@ export default async (options) => {
     }
 
     if (current.default) {
-      cache._routes
+      cache._routes;
     }
 
     cache._routes[route] = current.default ? current.default : current;
     return cache._routes[route];
-  }
+  };
 
   const getProxy = (app) => {
     let builtins = {
@@ -99,6 +102,13 @@ export default async (options) => {
       dispatch: app.dispatch,
       listen: app.listen,
       refresh: app.refresh,
+      computed: (name) => {
+        let prop = app._computed[name];
+        if (!prop) {
+          return null;
+        }
+        return prop[0](app.getState());
+      },
     };
 
     // Add plugin api's to proxy
@@ -124,7 +134,9 @@ export default async (options) => {
     _state: {},
     _listeners: [],
     _plugins: {},
+    _computed: {},
     routes: { ...cache.routes },
+    route: null,
     ok: true,
     plugin: async (plugin, options = {}) => {
       if (!plugin.name) {
@@ -141,7 +153,9 @@ export default async (options) => {
       app._plugins[plugin.name] = plugin;
       try {
         let api = await plugin.install(app, options);
-        opts.debug ? console.log(`[debug] Plugin "${plugin.name}" installed.`) : null
+        opts.debug
+          ? console.log(`[debug] Plugin "${plugin.name}" installed.`)
+          : null;
         if (api) {
           app._plugins[plugin.name].api = api;
           // Add to window global
@@ -168,26 +182,59 @@ export default async (options) => {
     },
     getRoute,
     getState: (...args) => {
+      let computedState = Object.keys(app._computed).reduce((prev, next) => {
+        const [stateFn, changeFn] = app._computed[next];
+
+        let run = !changeFn || !changeFn({ ...app._state, ...prev }, app.route);
+
+        if (!run && !cache._computed[next]) {
+          // not cached
+          run = true;
+        }
+
+        if (run) {
+          prev[next] = stateFn({ ...app._state, ...prev }, app.route);
+          // only cache if a changeFn in supplied
+          if (changeFn) {
+            cache._computed[next] = JSON.parse(JSON.stringify(prev[next]));
+          }
+        }
+
+        return prev;
+      }, {});
+
+      let appState = { ...app._state, ...computedState };
+
       if (args.length) {
-        return app._state[args[0]];
+        return appState[args[0]];
       }
-      return { ...app._state };
+      return appState;
     },
     setState: (key, value) => {
-      let oldState = Object.freeze(JSON.parse(JSON.stringify(app._state)));
+      let oldState = Object.freeze(JSON.parse(JSON.stringify(app.getState())));
       app._state[key] = value;
-      let newState = Object.freeze(JSON.parse(JSON.stringify(app._state)));
       // change listeners
       app._listeners.forEach((listener) => {
-        listener("stateChange", newState, oldState, key, value);
+        listener("stateChange", app.getState(), oldState, key, value);
       });
     },
     replaceState: (newState) => {
-      let oldState = Object.freeze(JSON.parse(JSON.stringify(app._state)));
+      let oldState = Object.freeze(JSON.parse(JSON.stringify(app.getState())));
       app._state = newState;
       app._listeners.forEach((listener) => {
-        listener("stateChange", newState, oldState, "*", newState);
+        listener("stateChange", app.getState(), oldState, "*", newState);
       });
+    },
+    computed: (propName, fn, changeFn) => {
+      if (app._computed[propName]) {
+        throw new Error(
+          `A computed property named "${propName}" already exits!`
+        );
+      }
+      if (!rules.isFunc(fn)) {
+        throw new Error(`A computed property expects a function.`);
+      }
+      app._computed[propName] = [fn, changeFn];
     },
     dispatch: (type, ...args) => {
       app._listeners.forEach((listener) => {
@@ -208,8 +255,9 @@ export default async (options) => {
       }
     },
     refresh: () => {
-      app.navigate(app._currentPath, true, true)
-        .then(() => app.dispatch('refreshed', app._currentPath))      
+      app
+        .navigate(app._currentPath, true, true)
+        .then(() => app.dispatch("refreshed", app._currentPath));
     },
     renderView: async (view, state, meta) => {
       let customRender = app.el.renderView && rules.isFunc(app.el.renderView);
@@ -221,7 +269,7 @@ export default async (options) => {
         } else {
           app.el.innerHTML = `${view}`;
         }
-        app.dispatch('view-rendered', { detail: { view, meta } });
+        app.dispatch("view-rendered", { detail: { view, meta } });
         return;
       }
 
@@ -234,7 +282,7 @@ export default async (options) => {
           await app.el.renderView(view, state, meta);
         } catch (err) {
           console.error("render async view error", err);
-          app.dispatch('view-render-failed', { detail: view, error: err });
+          app.dispatch("view-render-failed", { detail: view, error: err });
         }
         return;
       }
@@ -243,14 +291,14 @@ export default async (options) => {
         app.el.innerHTML = await view(state);
       } catch (err) {
         console.error("Render view errror", err);
-        app.dispatch('view-render-failed', { detail: view, error: err });
+        app.dispatch("view-render-failed", { detail: view, error: err });
       }
 
       if (meta) {
         document.title = `${opts.metaTitlePrepend}${meta.title}`;
       }
 
-      app.dispatch('view-rendered', { detail: { view, meta } });
+      app.dispatch("view-rendered", { detail: { view, meta } });
     },
     initRoute: async (route, state) => {
       const proxy = getProxy(app);
@@ -298,9 +346,21 @@ export default async (options) => {
           .split("&")
           .reduce((prev, curr) => {
             let t = curr.split("=");
-            prev[t[0]] = decodeURIComponent(t[1] || "");
+            if (t[0]) {
+              prev[t[0]] = decodeURIComponent(t[1] || "");
+            }
             return prev;
           }, {});
+
+        app.route = {
+          name: route.name,
+          match: path,
+          path: pathName,
+          meta: route.meta,
+          query,
+          params: xtra.params || {},
+        };
+
         let state = { ...app.getState(), ...xtra, query, path };
 
         // Pre-render hook
@@ -308,7 +368,7 @@ export default async (options) => {
           try {
             let routeState = await app.routeInit(route, state);
             if (routeState && !rules.isEmptyObject(routeState)) {
-              state = {...state, routeState};
+              state = { ...state, ...routeState };
             }
           } catch (err) {
             console.error("Pre-render failed:", err);
@@ -413,7 +473,7 @@ export default async (options) => {
       }
 
       if (opts.debug) {
-        console.log("[debug] Initial app state", app._state);
+        console.log("[debug] Initial app state", app.getState());
       }
 
       window.onpopstate = async () => {
@@ -434,7 +494,7 @@ export default async (options) => {
 
       window[opts.global].dispatch = app.dispatch.bind(app);
 
-      await app.boot();
+      await app.boot(getProxy(app));
 
       await app.navigate(window.location.pathname);
 
@@ -443,6 +503,21 @@ export default async (options) => {
       return { ok: false, error: e };
     }
   };
+
+  // computed
+  // Expected format 'name': [stateFunc, runFunc]
+  if (opts.computed) {
+    Object.keys(opts.computed).forEach((compKey) => {
+      opts.debug
+        ? console.log(`[debug] Adding computed property "${compKey}".`)
+        : null;
+      app.computed(
+        compKey,
+        opts.computed[compKey][0],
+        opts.computed[compKey][1]
+      );
+    });
+  }
 
   app.el = opts.node || document.body;
 

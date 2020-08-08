@@ -1,0 +1,29 @@
+body.has-modal {
+    overflow: hidden;
+}
+body.has-modal:after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    opacity: var(--modal-backdrop-opacity, .8);
+    background-color: var(--modal-backdrop-color, rgb(0, 0, 0));
+    z-index: 98;
+}
+.modal {
+    position: absolute;
+    z-index: 99;
+    top: var(--modal-top, 100px);
+    left: var(--modal-left, 50%);
+    width: var(--modal-width, 85%);
+    max-height: var(--modal-max-height, 450px);
+    overflow-y: auto;
+    background-color: var(--modal-background-color, rgb(255, 255, 255));
+    transform: translateX(var(--modal-translate-x, -50%));
+    border-radius: var(--modal-border-radius, 0);
+}
+.modal__content {
+    padding: 20px;
+}
