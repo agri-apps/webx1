@@ -1,0 +1,27 @@
+input[type=text] {
+    padding: var(--input-padding, 10px);
+    border: 0;
+    box-shadow:0 0 15px 4px rgba(0,0,0,0.06);
+    width: var(--input-width, 100%);
+}
+input[type=text].rounded {
+    border-radius: var(--input-border-radius, 10px);
+}
+input, textarea {
+    font-family: inherit;
+    font-size: inherit;
+}
+textarea {
+    width: var(--text-area-width, 100%);
+    resize: vertical;
+    padding: var(--text-area-padding, 15px);
+    border-radius: var(--text-area-border-radius, 15px);
+    border: 0;
+    box-shadow: 4px 4px 10px rgba(0,0,0,0.06);
+    height: var(--text-area-height, 150px);
+}
+select {
+    width: var(--select-width, 100%);
+    padding: var(--select-padding, 10px);
+    border-radius: var(--select-border-radius, 10px);
+}

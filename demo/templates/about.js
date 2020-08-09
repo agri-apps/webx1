@@ -1,1 +1,1 @@
-let about =  `<div class="page about-page"><h1>About</h1><div id="lorem"></div></div>`;
+let about =  `<div class="page about-page"><h1 data-i18n="about">About</h1><div id="lorem"></div></div>`;

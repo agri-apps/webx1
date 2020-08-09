@@ -1,0 +1,89 @@
+:root {
+    --toast-width: auto;
+    --toast-padding: 20px 10px;
+    --toast-background-color: white;
+    --toast-text-color: #333;
+    --toast-border-color: #ccc;
+    --toast-border-size: 1px;
+    --toast-box-shadow: 4px 4px 10px rgba(0,0,0,0.06);
+    --toast-bottom: 30px;
+    --toast-left: 50%;
+    --toast-margin-left: 0;
+    --toast-translate-x: -50%;
+    --toast-translate-y: -20px;
+    --toast-padding-right: 30px;
+    --toast-close-top: 50%;
+    --toast-close-translate-y: -50%;
+    --toast-close-left: 100%;
+    --toast-close-margin-left: -20px;  
+    --toast-success-color: #4CAF50;
+    --toast-danger-color: #f44336;
+    --toast-warning-color: #ff9800;
+    --toast-info-color: #2196F3;
+}
+.toast {
+    position: fixed;
+    width: var(--toast-width);
+    bottom: var(--toast-bottom);
+    left: var(--toast-left);
+    margin-left: var(--toast-margin-left);
+    transform: translate(var(--toast-translate-x), var(--toast-translate-y));
+    background-color: var(--toast-background-color);
+    color: var(--toast-text-color);
+    border: var(--toast-border-size) solid var(--toast-border-color);
+    padding: var(--toast-padding);
+    box-shadow: var(--toast-box-shadow);
+}
+.toast.closable {
+    padding-right: var(--toast-padding-right);
+}
+.toast .close {
+    position: absolute;
+    top: var(--toast-close-top);
+    transform: translateY(var(--toast-close-translate-y));
+    left: var(--toast-close-left);
+    margin-left: var(--toast-close-margin-left);
+    cursor: pointer;
+}
+/* Themes */
+.toast.success {
+    border-left: 5px solid var(--toast-success-color);    
+}
+.toast.danger {
+    border-left: 5px solid var(--toast-danger-color);
+}
+.toast.info {
+    border-left: 5px solid var(--toast-info-color);
+}
+.toast.warning {
+    border-left: 5px solid var(--toast-warning-color);
+}
+.toast.dark {
+    --toast-background-color: #333;
+    --toast-text-color: white;
+}
+.toast.bottom-left {
+    --toast-left: 20px;
+    --toast-translate-x: 0;
+}
+.toast.bottom-right {
+    --toast-left: 100%;
+    --toast-translate-x: -100%;
+    --toast-margin-left: -20px;
+}
+.toast.top-center {
+    --toast-bottom: 100%;
+    --toast-translate-y: 80px;
+}
+.toast.top-left {
+    --toast-bottom: 100%;
+    --toast-translate-y: 80px;
+    --toast-left: 20px;
+    --toast-margin-left: 0px;
+    --toast-translate-x: 0;
+}
+.toast.top-right {
+    --toast-bottom: 100%;
+    --toast-translate-y: -100%;
+    --toast-left: 100%;
+}

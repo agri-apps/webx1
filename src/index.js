@@ -280,6 +280,7 @@ export default async (options) => {
       if (customRender) {
         try {
           await app.el.renderView(view, state, meta);
+          app.dispatch("view-rendered", { detail: { view, meta } });
         } catch (err) {
           console.error("render async view error", err);
           app.dispatch("view-render-failed", { detail: view, error: err });
@@ -317,7 +318,7 @@ export default async (options) => {
     routeInit: async (route, state) => {
       let rt = await getRoute(route);
       if (opts.routeInit && rules.isFunc(opts.routeInit)) {
-        await opts.routeInit(rt, state);
+        await opts.routeInit(rt, state, getProxy(app));
       }
     },
     navigate: async (pathName, force, refreshOnly) => {

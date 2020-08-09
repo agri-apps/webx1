@@ -1,6 +1,6 @@
 {
   "name": "webx1",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "Simple and fast web applications",
   "source": "src/index.js",
   "main": "dist/webx1.js",
@@ -17,7 +17,8 @@
     "build:plugins": "microbundle -i src/plugins/index.js -o demo/scripts/plugins.js --no-pkg-main -f umd",
     "clean": "rm -rf dist",
     "dev": "microbundle watch",
-    "copy:assets": "cp dist/webx1*.umd* demo/ && cp src/plugins/modal/modal.css demo/assets/modal.css",
+    "copy:assets": "cp dist/webx1*.umd* demo/ && npm run copy:css",
+    "copy:css": "cp src/plugins/**/*.css demo/assets",
     "serve": "live-server ./demo --port=8080 --entry-file=index.html",
     "demo": "npm run build && npm run build:plugins && npm run copy:assets && npm run serve",
     "prepublish": "npm run build",

@@ -8,84 +8,86 @@
     <meta name="description" content="WEBx, the blazing fast web tool">
     <title>Webx v1 Demo</title>
     <link rel="preconnect" href="https://jsonplaceholder.typicode.com">
-    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="preload" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto&display=swap" rel="preload" as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
     <link rel="preload" as="style" href="/assets/app.css" onload="this.onload=null;this.rel='stylesheet'" />
     <link rel="preload" as="style" href="/assets/modal.css" onload="this.onload=null;this.rel='stylesheet'" />
-    <style>   
+    <link rel="preload" as="style" href="/assets/form.css" onload="this.onload=null;this.rel='stylesheet'" />
+    <link rel="preload" as="style" href="/assets/toast.css" onload="this.onload=null;this.rel='stylesheet'" />
+    <style>
         :root {
             --modal-width: 400px;
             --modal-border-radius: 8px;
             --modal-backdrop-color: steelblue;
-        }     
+            --input-width: 250px;
+            --toast-bottom: 100px;
+            --toast-width: 180px;
+        }
+
+        html,
+        body {
+            font-family: "Roboto", sans-serif;
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+
+        *,
+        *:after,
+        *:before {
+            box-sizing: content-box;
+        }
+
+        header,
+        #app,
+        footer {
+            padding: 6px 12px;
+        }
+
+        header nav {
+            display: flex;
+            align-items: center;
+        }
+
+        header nav a {
+            text-decoration: none;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        header nav a.active {
+            background-color: #ccc;
+        }
+
+        .appshell {
+            height: 100%;
+            display: grid;
+            grid-template-rows: auto 1fr auto;
+        }
+
+        footer {
+            padding: 20px 12px;
+            background-color: #f1f1f1;
+            text-align: center;
+        }
+
         .logo {
             background-color: #ccc;
             color: #333;
             border-radius: 13px;
         }
-        .version  {
-            font-size: .75em;
-            background-color: #f1f1f1;
-            padding: 1px 3px;
-            border-radius: 5px;
+        /*[data-i18n] {
+            text-shadow: 0 0 32px white;
+            color: transparent;  
         }
-        .blog-posts {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            column-gap: 20px;
-            row-gap: 20px;
-        }
-
-        .blog-page img {
-            margin-top: 20px;
-            object-fit: cover;
-            width: 100%;
-            height: 200px;
-        }
-
-        .home-page {
-            display: grid;
-            place-items: center;
-            padding: 30px auto;
-        }
-
-        .blog-page {
-            border-color: steelblue;
-        }
-
-        .about-page {
-            border-color: orange;
-        }
-
-        .settings-page {
-            border-color: red;
-        }
-        .active--blue {
-            background-color: steelblue;
-            color: white;
-        }
-        .active--orange {
-            background-color: orange;
-            color: white;
-        }
-        .active--red {
-            background-color: red;
-            color: white;
-        }
-        .relative {
-            position: relative;
-        }
-        #renderTime {
-            font-size: .8em;
-            position: absolute;
-            top: 16px;
-            right: 20px;
-            color: #666;
-        }
+        */
+        
     </style>
     <script src="templates/about.js" async></script>
     <script src="templates/blog.js" async></script>
     <script src="templates/settings.js" async></script>
     <script src="templates/blogpost.js" async></script>
+    <script src="forms/settings.js"></script>
 
 </head>
 
@@ -94,32 +96,37 @@
         <header class="relative">
             <nav>
                 <a href="/" data-route="home">🚥 WEBx <span class="version">v1</span></a>
-                <a href="/blog" data-route="blog">Blog</a>
+                <a href="/blog" data-route="blog" data-i18n="blog">Blog</a>
                 <!-- Uses the anchor-plugin for routing -->
-                <a href="/about" data-route="about">About</a>
-                <a href="/settings" data-route="settings">Settings</a>             
+                <a href="/about" data-route="about" data-i18n="about">About</a>
+                <a href="/settings" data-route="settings" data-i18n="settings">Settings</a>
             </nav>
             <span id="renderTime">rendered @</span>
         </header>
         <div id="app"></div>
-        <footer onclick="alert(JSON.stringify(window.app.getState()));">Made with ❤️ love by the 🚥 WEBx team!</footer>
+        <footer onclick="alert(JSON.stringify(window.app.getState()));" data-i18n="footer">Made with ❤️ love by the 🚥 WEBx team!</footer>
     </div>
     <script src="/webx1.umd.js"></script>
     <script src="scripts/plugins.js"></script>
     <script>
+        let userLang = localStorage.getItem('app.language') || 'en';
+        let userMessage = localStorage.getItem('app.message') || '🚥 WEBx rocks!';
+
         const app = window.webx1({
             debug: true,
             init: async () => {
+            
                 try {
                     const res = await fetch('https://jsonplaceholder.typicode.com/posts/');
                     const posts = await res.json();
 
-                    return { posts: posts.slice(0, 6), message: '🚥 WEBx rocks!' }
+
+                    return { language: userLang, posts: posts.slice(0, 6), message: userMessage }
                 } catch (e) {
-                    return { postsError: 'Unable to fetch posts', message: 'Rocks' }
+                    return { postsError: 'Unable to fetch posts', message: userMessage }
                 }
             },
-            routeInit: (route, state) => {
+            routeInit: (route, state, {i18n}) => {
                 // runs before every route is rendered..
                 // dyanmic views are not mounted yet!
                 let renderTimeEl = document.querySelector('#renderTime');
@@ -129,18 +136,18 @@
                     minute: "2-digit",
                     second: "2-digit"
                 });
-                renderTimeEl.textContent = `rendered @ ${time}`;
-
-
+                renderTimeEl.textContent = `${i18n.translate('rendered')} @ ${time}`;                
             },
             routes: {
                 '/': {
                     view: ({ message }) => `<div class="page home-page"><h1></h1></div>`,
                     init: ({ message }, ctx) => {
-                        // type plugin call
+
+                        // example plugin usage
                         ctx.typer.typeIt(document.querySelector('h1'), message, 50);
+                        ctx.toast.show(ctx.i18n.translate('welcome'), { delay: 1000, position: 'bottom center', theme: 'success' });                        
                     },
-                    name: 'home',                    
+                    name: 'home',
                     meta: { title: 'Home' },
                     activeClass: '__none__'
                 },
@@ -159,7 +166,7 @@
                             fetch(`https://jsonplaceholder.typicode.com/users/${state.params.id}`)
                                 .then(res => res.json())
                                 .then(data => {
-                                    ctx.modal.show(ctx.template.render('author', data), (modalEl, {close}) => {
+                                    ctx.modal.show(ctx.template.render('author', data), (modalEl, { close }) => {
                                         modalEl.querySelector('.ok').addEventListener('click', close)
                                     })
                                 })
@@ -177,20 +184,42 @@
                     activeClass: 'active--orange',
                     init: async (state, ctx, el) => {
                         ctx.template.ready('lorem', (tmpl) => {
-                            el.querySelector('#lorem').innerHTML = ['blue', 'orange','red'].map(x => tmpl({color: x})).join('');
+                            el.querySelector('#lorem').innerHTML = ['blue', 'orange', 'red'].map(x => tmpl({ color: x })).join('');
                         })
                     }
                 },
                 '/settings': {
                     view: () => settings,
-                    init: (state, { setState }, el) => {
-                        let $inp = el.querySelector('input[name="message"]');
-                        $inp.value = state['message'];
+                    init: (state, { setState, form, i18n }, el) => {
+                        let sa, ea;
+                        let successAlert = () => sa ? sa : (sa = el.querySelector('.alert.success'));
+                        let errorAlert = () => ea ? ea : (ea = el.querySelector('.alert.error'));
 
-                        $inp.addEventListener('change', function (e) {
-                            e.preventDefault();
-                            setState('message', e.target.value);
-                        });
+                        let hide = (el, delay = 2000) => {
+                            setTimeout(() => {
+                                el.classList.remove('show');
+                            }, delay);
+                        }
+
+                        let formEl = form.generate('settings', { message: state.message, lang: state.language },
+                            (_, values, msg) => {
+                                if (values.json) {
+                                    setState('message', values.json.message || state.message);
+                                    setState('language', values.json.lang);
+                                }
+                                successAlert().innerHTML = msg;
+                                successAlert().classList.add('show');
+                                hide(errorAlert(), 0);
+                                hide(successAlert(), 2000);
+                            }, (_, values, errors) => {
+                                hide(successAlert(), 0);
+                                errorAlert().innerHTML = errors['message'];
+                                errorAlert().classList.add('show');
+                            })
+
+                        formEl.appendTo(el.firstElementChild);
+                        i18n.translate(formEl.target);
+
                     },
                     name: 'settings',
                     meta: { title: 'Settings' },
@@ -200,7 +229,7 @@
             metaTitlePrepend: 'WEBx 🚥 ',
             plugins: [
                 [window.webx1NavPlugin, { scope: 'body', activeClassName: 'active' }],
-                [window.webx1TyperPlugin, { speed: 50 } ],
+                [window.webx1TyperPlugin, { speed: 50 }],
                 [window.webx1TemplaterPlugin, {
                     installed: async (name, api) => {
                         await api.registerFromUrl('lorem', 'partials/lorem.html');
@@ -210,7 +239,22 @@
                         </div>`);
                     }
                 }],
-                [window.webx1ModalPlugin, {}]
+                [window.webx1ModalPlugin, {}],
+                [window.webx1FormPlugin, {
+                    forms: [
+                        ['settings', settingsForm, ({ message }) => {
+                            if (!message) {
+                                return [false, { 'message': 'A message is required!' }];
+                            }
+                            return [true, 'Settings updated!']
+                        }]
+                    ]
+                }],
+                [window.webx1ToasterPlugin, {}],
+                [window.webx1i18nPlugin, { 
+                    language: userLang,
+                    scope: "body"
+                 }]
             ],
             computed: {
                 'sid': [() => new Date().getTime()],
@@ -219,20 +263,30 @@
                         let post = state.posts.filter(x => x.id === parseInt(route.params.id))[0];
                         return post;
                     }
-    
+
                     return null;
                 }]
             },
             node: document.getElementById('app')
         })
-        .then(app => {
-            window.app = app;
-            /*                         
-            app.listen(function (type, ...rest) {
-                console.log('state change', type, rest)
-            });
-            */
-        })
+            .then(app => {
+                window.app = app;
+
+                app.listen(function (type, ...args) {
+                    if (type==="stateChange") {
+                        if (args[2] === "language") {
+                            localStorage.setItem('app.language', args[3]);
+                            app.ctx.i18n.load(args[3])
+                                .then((t) => {
+                                    app.ctx.i18n.translate(document.body)
+                                })
+                        } else if (args[2] === "message") {
+                            localStorage.setItem("app.message", args[3]);
+                        }
+                        
+                    }
+                })
+            })
     </script>
 
 </body>

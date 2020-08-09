@@ -1,48 +1,67 @@
-html,
-body {
-  font-family: "Roboto", sans-serif;
-  margin: 0;
-  padding: 0;
-  height: 100%;
-}
-
-*,
-*:after,
-*:before {
-  box-sizing: content-box;
-}
-
-header,
-#app,
-footer {
-  padding: 6px 12px;
-}
-
-header nav {
-  display: flex;
-  align-items: center;
-}
-
-header nav a {
-  text-decoration: none;
-  padding: 4px 8px;
-  border-radius: 8px;
-}
-
-header nav a.active {
-  background-color: #ccc;
-}
-
-.appshell {
-  height: 100%;
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-}
-
-footer {
-  padding: 20px 12px;
+.version {
+  font-size: .75em;
   background-color: #f1f1f1;
-  text-align: center;
+  padding: 1px 3px;
+  border-radius: 5px;
+}
+
+.blog-posts {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  column-gap: 20px;
+  row-gap: 20px;
+}
+
+.blog-page img {
+  margin-top: 20px;
+  object-fit: cover;
+  width: 100%;
+  height: 200px;
+}
+
+.home-page {
+  display: grid;
+  place-items: center;
+  padding: 30px auto;
+}
+
+.blog-page {
+  border-color: steelblue;
+}
+
+.about-page {
+  border-color: orange;
+}
+
+.settings-page {
+  border-color: red;
+}
+
+.active--blue {
+  background-color: steelblue;
+  color: white;
+}
+
+.active--orange {
+  background-color: orange;
+  color: white;
+}
+
+.active--red {
+  background-color: red;
+  color: white;
+}
+
+.relative {
+  position: relative;
+}
+
+#renderTime {
+  font-size: .8em;
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  color: #666;
 }
 
 form label {
@@ -52,6 +71,10 @@ form label {
 
 form input[type="text"] {
   padding: 4px 12px;
+}
+
+.form-control {
+  margin-bottom: 20px;
 }
 
 .card {
@@ -83,4 +106,18 @@ footer {
   background-color: steelblue;
   color: white;
   padding: 8px 16px;
+}
+.alert {
+  display: none;
+  border: 1px solid #ccc;
+  padding: 16px 16px;
+}
+.alert.show { display: inline-block; }
+.alert.success {
+  color: forestgreen;  
+  border-left: 5px solid forestgreen;
+}
+.alert.error {
+  color: red;
+  border-left: 5px solid red;
 }
