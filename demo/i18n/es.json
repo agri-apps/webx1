@@ -8,5 +8,7 @@
     "save": "Salvar",
     "read-more": "Lee mas",
     "posts": "publicaciones",
-    "rendered": "prestado"
+    "rendered": "prestado",
+    "message-required": "¡Se requiere un mensaje!",
+    "settings-updated": "¡Ajustes actualizan!"
 }

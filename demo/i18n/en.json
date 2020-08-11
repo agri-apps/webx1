@@ -8,5 +8,7 @@
     "save": "Save",
     "read-more": "Read more",
     "posts": "posts",
-    "rendered": "rendered"
+    "rendered": "rendered",
+    "message-required": "A message is required!",
+    "settings-updated": "Settings updated!"
 }

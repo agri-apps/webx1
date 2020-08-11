@@ -51,7 +51,7 @@ const install = async (app, options) => {
         return json;
       } catch (err) {
         console.error(
-          `[${PLUGIN}] Unable to load "${language}" translations.`,
+          `[${PLUGIN}] Unable to load "${lang}" translations.`,
           err
         );
       }

@@ -207,13 +207,13 @@
                                     setState('message', values.json.message || state.message);
                                     setState('language', values.json.lang);
                                 }
-                                successAlert().innerHTML = msg;
+                                successAlert().innerHTML = i18n.translate(msg);
                                 successAlert().classList.add('show');
                                 hide(errorAlert(), 0);
                                 hide(successAlert(), 2000);
                             }, (_, values, errors) => {
                                 hide(successAlert(), 0);
-                                errorAlert().innerHTML = errors['message'];
+                                errorAlert().innerHTML = i18n.translate(errors['message']);
                                 errorAlert().classList.add('show');
                             })
 
@@ -244,9 +244,9 @@
                     forms: [
                         ['settings', settingsForm, ({ message }) => {
                             if (!message) {
-                                return [false, { 'message': 'A message is required!' }];
+                                return [false, { 'message': 'message-required' }];
                             }
-                            return [true, 'Settings updated!']
+                            return [true, 'settings-updated']
                         }]
                     ]
                 }],
@@ -254,7 +254,10 @@
                 [window.webx1i18nPlugin, { 
                     language: userLang,
                     scope: "body"
-                 }]
+                 }],
+                [window.webx1LocalStoragePlugin, {
+                    prefix: 'app.'
+                }]
             ],
             computed: {
                 'sid': [() => new Date().getTime()],
@@ -275,13 +278,13 @@
                 app.listen(function (type, ...args) {
                     if (type==="stateChange") {
                         if (args[2] === "language") {
-                            localStorage.setItem('app.language', args[3]);
+                            app.ctx.storage.local.setItem('language', args[3], false);
                             app.ctx.i18n.load(args[3])
                                 .then((t) => {
                                     app.ctx.i18n.translate(document.body)
                                 })
                         } else if (args[2] === "message") {
-                            localStorage.setItem("app.message", args[3]);
+                            app.ctx.storage.local.setItem("message", args[3], false);
                         }
                         
                     }
