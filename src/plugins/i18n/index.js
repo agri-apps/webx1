@@ -26,8 +26,6 @@ const install = async (app, options) => {
   };
 
   const translatePage = (root, translations) => {
-    console.log("translating page", root, translations);
-
     api._elements = [].slice.call(root.querySelectorAll("[data-i18n]"));
     api._elements.forEach((el) => {
       let text = translateText(el.dataset.i18n, translations);

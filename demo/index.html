@@ -159,6 +159,16 @@
                 },
                 '/blog/:id': {
                     view: (state) => blogpost(state),
+                    viewState: ({posts, params}) => {
+                        let id = params.id;
+                        let post = posts.filter(x => x.id == id)[0];
+                        if (post) {
+                            let nextPost = posts.filter(x => x.id == (parseInt(id) + 1))[0];
+                            console.log('next post', nextPost)
+                            return { nextPost }
+                        }
+                        return { nextPost: null };
+                    },
                     init: (state, ctx, el) => {
                         let btn = el.querySelector('.author button');
                         btn.addEventListener('click', () => {

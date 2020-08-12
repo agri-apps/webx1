@@ -317,9 +317,14 @@ export default async (options) => {
     },
     routeInit: async (route, state) => {
       let rt = await getRoute(route);
+      let routeState = {};
       if (opts.routeInit && rules.isFunc(opts.routeInit)) {
-        await opts.routeInit(rt, state, getProxy(app));
+        routeState = await opts.routeInit(rt, state, getProxy(app)) || {};
       }
+      if (route.viewState && rules.isFunc(route.viewState)) {
+        routeState = {...routeState, ...(await route.viewState(state))}
+      }
+      return routeState;
     },
     navigate: async (pathName, force, refreshOnly) => {
       // don't fire same route unless forced
