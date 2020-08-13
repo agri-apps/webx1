@@ -62,6 +62,9 @@ let Store = (state = {}, changeEvent = "change", ctx) => {
       let localCtx = ctx ? (typeof ctx === 'function' ? ctx() : ctx) : {};
 
       let newState = await action(this.state(), payload, localCtx);
+      
+      this._cache.events.push({type, payload, replayed: this._replaying, result: newState});
+
       if (newState && typeof newState === "object") {
         this._state = { ...this._state, ...newState };
         this._useCachedState = false;
@@ -73,7 +76,7 @@ let Store = (state = {}, changeEvent = "change", ctx) => {
           }
         }
       }
-      this._cache.events.push({type, payload, replayed: this._replaying});
+      
     },
     listen(callback) {
       if (callback && typeof callback === "function") {
@@ -96,7 +99,7 @@ let Store = (state = {}, changeEvent = "change", ctx) => {
       return newStore;
     },
     uncommittedEvents() {
-      return (this._cache.events || []).filter(x => !x.replayed)[0];
+      return (this._cache.events || []).filter(x => !x.replayed);
     }
   });
 };
