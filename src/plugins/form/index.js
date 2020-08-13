@@ -69,7 +69,7 @@ export default {
   name: PLUGIN,
   global: "$",
   namespace: "form",
-  install: (app, options = {}) => {
+  install: async (app, options = {}) => {
     let cache = { forms: {} };
 
     let opts = Object.assign({}, defaultOptions, options);
@@ -196,10 +196,18 @@ export default {
     };
 
     if (opts.forms) {
-      opts.forms.forEach((frm) => {
+      opts.forms.forEach(async (frm) => {
         const [name, html, validate] = frm;
+
+        let view = html;
+
+        // async views
+        if (typeof html === 'function') {
+            view = await html();
+        }
+
         try {
-          api.register(name, html, validate);
+          api.register(name, view, validate);
         } catch (err) {
           console.error(`[${PLUGIN}] Unable to register form "${name}"`, err);
         }

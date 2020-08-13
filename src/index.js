@@ -252,7 +252,7 @@ export default async (options) => {
         };
       } else {
         console.error("Listen handler must be a function", handler);
-      }
+      }      
     },
     refresh: () => {
       app

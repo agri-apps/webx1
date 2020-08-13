@@ -34,16 +34,13 @@ export default {
 
         let modal = document.createElement('div');
         modal.innerHTML = opts.template(localOptions);
-        console.log('template', modal.innerHTML, modal);
 
         let modalEl = modal.firstElementChild;
-        console.log('modalEl', modalEl, modal.firstChild, modal.firstElementChild);
 
         rootEl.appendChild(modalEl);
 
         modalEl.style.display = 'block';
         let contentEl = modalEl.querySelector(`.${localOptions.contentClassName}`);
-        console.log('contentEl', contentEl);
         if (contentEl) {
             contentEl.innerHTML = content;
         }

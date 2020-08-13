@@ -164,7 +164,6 @@
                         let post = posts.filter(x => x.id == id)[0];
                         if (post) {
                             let nextPost = posts.filter(x => x.id == (parseInt(id) + 1))[0];
-                            console.log('next post', nextPost)
                             return { nextPost }
                         }
                         return { nextPost: null };
@@ -267,6 +266,31 @@
                  }],
                 [window.webx1LocalStoragePlugin, {
                     prefix: 'app.'
+                }],
+                [window.webx1StorePlugin, {
+                    stores: {
+                        'foo': {
+                            state: { items: [] },
+                            mutations: {
+                                addFoo: [(state, payload) => {
+                                    return { items: [...state.items, payload] };
+                                }, 'fooAdded', (payload, newState) => ({ item: payload, ...newState })],
+                                removeFoo: (state, payload) => {
+                                    return { items: [...state.items.filter(x => x.id !== payload)] }
+                                }
+                            },
+                            getters: {
+                                fooCount: (state) => state.items ? state.items.length : 0
+                            },
+                            addFoo(id, name) {
+                                this.commit('addFoo', { id, name, entered: Date.now() });
+                            },
+                            removeFoo(id) {
+                                this.commit('removeFoo', id );
+                            }
+
+                        }
+                    }
                 }]
             ],
             computed: {
@@ -284,6 +308,8 @@
         })
             .then(app => {
                 window.app = app;
+
+                window.fooStore = window.app.ctx.store.getStore('foo');
 
                 app.listen(function (type, ...args) {
                     if (type==="stateChange") {
