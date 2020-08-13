@@ -318,11 +318,12 @@ export default async (options) => {
     routeInit: async (route, state) => {
       let rt = await getRoute(route);
       let routeState = {};
+      let proxy = getProxy(app);
       if (opts.routeInit && rules.isFunc(opts.routeInit)) {
-        routeState = await opts.routeInit(rt, state, getProxy(app)) || {};
+        routeState = await opts.routeInit(rt, state, proxy) || {};
       }
       if (route.viewState && rules.isFunc(route.viewState)) {
-        routeState = {...routeState, ...(await route.viewState(state))}
+        routeState = {...routeState, ...(await route.viewState(state, proxy))}
       }
       return routeState;
     },

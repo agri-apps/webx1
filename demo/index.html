@@ -159,7 +159,7 @@
                 },
                 '/blog/:id': {
                     view: (state) => blogpost(state),
-                    viewState: ({posts, params}) => {
+                    viewState: ({posts, params}, /* ctx */) => {
                         let id = params.id;
                         let post = posts.filter(x => x.id == id)[0];
                         if (post) {
