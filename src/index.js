@@ -380,6 +380,11 @@ export default async (options) => {
           } catch (err) {
             console.error("Pre-render failed:", err);
           }
+        } else {
+          // view state
+          if (route.viewState && rules.isFunc(route.viewState)) {
+            state = {...state, ...(await route.viewState(state, getProxy(app)))}
+          }
         }
 
         // Render view
