@@ -17,6 +17,7 @@ export default async (options) => {
     views: {},
     _routes: {},
     _computed: {},
+    _waiting: { plugins: [] },
     routes: {
       "/": () => ({
         view: `<div>Webx Rocks!</div>`,
@@ -179,6 +180,16 @@ export default async (options) => {
         }
         delete app._plugins[plugin.name];
       }
+    },
+    waitForPlugin: (name, handler) => {
+      if (app.ctx && app.ctx[name]) {
+        handler(app.ctx[name], app);
+        return;
+      }
+      if (!cache._waiting.hasOwnProperty(name)) {
+        cache._waiting[name] = [];
+      }
+      cache._waiting[name].push(handler);
     },
     getRoute,
     getState: (...args) => {
@@ -542,6 +553,20 @@ export default async (options) => {
 
   // set the app context
   app.ctx = getProxy(app);
+
+  // waiting for plugins
+  Object.keys(cache._waiting).forEach(key => {
+    let waiting = cache._waiting[key];
+    let plugin = app.ctx ? app.ctx[key] : null;
+    if (!plugin) {
+      console.warn(`Waiting for "${key}", but does not exist as a plugin?`);
+      return;
+    }
+    waiting.forEach(item => {
+      item(plugin, app.ctx);
+    });
+  });
+  cache._waiting = {};  
 
   if (opts.node && (rules.isElement(opts.node) || rules.isNode(opts.node))) {
     return mount(opts.node);
