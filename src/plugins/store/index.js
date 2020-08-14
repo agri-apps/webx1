@@ -23,9 +23,16 @@ export default {
         }
 
         const { changeEvent = opts.changeEvent, state, ...proto } = config;
+
+        const setStoreState = (name, obj) => {
+            if (_stores[name]) {
+                _stores[name].replaceState(obj, true);
+            }
+        }
+
         let initState = state;
         if (state && typeof state === 'function') {
-            initState = await state(app);
+            initState = await state(setStoreState, app);
         } else if (!state) {
             initState = {}
         }

@@ -21,6 +21,15 @@ let Store = (state = {}, changeEvent = "change", ctx) => {
     _cache: { state: { ...state }, events: [] },
     mutations: {},
     getters: {},
+    replaceState(state, clearEvents = false) {
+      this._state = state;
+      this._cache.state = {...state};
+      this._useCachedState = true;
+      this.emitChange();
+      if (clearEvents) {
+        this._cache.events = [];
+      }
+    },
     state(key) {
       let currentState = this._useCachedState
         ? this._cache.state

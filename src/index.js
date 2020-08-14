@@ -555,7 +555,7 @@ export default async (options) => {
   app.ctx = getProxy(app);
 
   // waiting for plugins
-  Object.keys(cache._waiting).forEach(key => {
+  Object.keys(cache._waiting.plugins).forEach(key => {
     let waiting = cache._waiting[key];
     let plugin = app.ctx ? app.ctx[key] : null;
     if (!plugin) {
@@ -563,7 +563,7 @@ export default async (options) => {
       return;
     }
     waiting.forEach(item => {
-      item(plugin, app.ctx);
+      item(plugin, app);
     });
   });
   cache._waiting = {};  
