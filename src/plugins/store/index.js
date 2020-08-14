@@ -10,19 +10,25 @@ export default {
   name: PLUGIN,
   global: "$",
   namespace: "store",
-  install: (app, options) => {
+  install: async (app, options) => {
     let _stores = [];
     const opts = Object.assign({}, defaultOptions, options);
 
     const api = {
-      registerStore: (name, config) => {
+      registerStore: async (name, config) => {
         if (_stores[name]) {
           throw new Error(
             `[${PLUGIN}] A store named "${name}" is already registered.`
           );
         }
 
-        const { changeEvent = opts.changeEvent, state = {}, ...proto } = config;
+        const { changeEvent = opts.changeEvent, state, ...proto } = config;
+        let initState = state;
+        if (state && typeof state === 'function') {
+            initState = await state(app);
+        } else if (!state) {
+            initState = {}
+        }
 
         const ctx = () =>
           opts.context
@@ -33,7 +39,7 @@ export default {
 
         const store = Store(config.state, changeEvent, ctx).extend({
           name,
-          state,
+          state: initState,
           ...proto,
         });
         _stores[name] = store;
@@ -50,9 +56,9 @@ export default {
 
     if (opts.stores)
       [
-        Object.keys(opts.stores).forEach((storeKey) => {
+        Object.keys(opts.stores).forEach(async (storeKey) => {
           let store = opts.stores[storeKey];
-          api.registerStore(storeKey, store);
+          await api.registerStore(storeKey, store);
         }),
       ];
 

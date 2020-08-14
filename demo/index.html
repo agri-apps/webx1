@@ -270,7 +270,7 @@
                 [window.webx1StorePlugin, {
                     stores: {
                         'foo': {
-                            state: { items: [] },
+                            state: async(app) => ({ items: [], xtra: app.debug }),
                             mutations: {
                                 addFoo: [(state, payload) => {
                                     return { items: [...state.items, payload] };
