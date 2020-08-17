@@ -102,7 +102,7 @@ let Store = (state = {}, changeEvent = "change", ctx) => {
       let computedState = buildState(state, proto.getters);
 
       var newStore = 
-        Object.assign({}, Store(computedState || Store._state, changeEvent || Store._changeEvent), api);
+        Object.assign(Store(computedState || Store._state, changeEvent || Store._changeEvent), api);
 
       delete newStore.extend;
       return newStore;

@@ -263,7 +263,7 @@ export default async (options) => {
         };
       } else {
         console.error("Listen handler must be a function", handler);
-      }      
+      }
     },
     refresh: () => {
       app
@@ -272,6 +272,10 @@ export default async (options) => {
     },
     renderView: async (view, state, meta) => {
       let customRender = app.el.renderView && rules.isFunc(app.el.renderView);
+
+      if (app.debug) {
+        console.log("[debug] rendering view", view, state, meta);
+      }
 
       // Non function views
       if (!rules.isFunc(view)) {
@@ -315,7 +319,6 @@ export default async (options) => {
     initRoute: async (route, state) => {
       const proxy = getProxy(app);
       let rt = await getRoute(route);
-
       if (rules.isFunc(rt.init)) {
         await rt.init(state, proxy, app.el);
       }
@@ -331,10 +334,13 @@ export default async (options) => {
       let routeState = {};
       let proxy = getProxy(app);
       if (opts.routeInit && rules.isFunc(opts.routeInit)) {
-        routeState = await opts.routeInit(rt, state, proxy) || {};
+        routeState = (await opts.routeInit(rt, state, proxy)) || {};
       }
       if (route.viewState && rules.isFunc(route.viewState)) {
-        routeState = {...routeState, ...(await route.viewState(state, proxy))}
+        routeState = {
+          ...routeState,
+          ...(await route.viewState(state, proxy)),
+        };
       }
       return routeState;
     },
@@ -394,7 +400,10 @@ export default async (options) => {
         } else {
           // view state
           if (route.viewState && rules.isFunc(route.viewState)) {
-            state = {...state, ...(await route.viewState(state, getProxy(app)))}
+            state = {
+              ...state,
+              ...(await route.viewState(state, getProxy(app))),
+            };
           }
         }
 
@@ -443,31 +452,32 @@ export default async (options) => {
         app._currentRoute = pathName;
         await setRoute(pathName);
         return { path: pathName, route: pathName, query, params };
-      }
+      } else {
+        // param route w/fuzzy match logic
+        let tokens = pathName.split("/").slice(1);
+        let found = Object.keys(cache.routes).filter((x) => {
+          return (
+            x.indexOf(`/${tokens[0]}`) !== -1 &&
+            x.split("/").slice(1).length === tokens.length
+          );
+        })[0];
 
-      // param route w/fuzzy match logic
-      let tokens = pathName.split("/").slice(1);
-      let found = Object.keys(cache.routes).filter((x) => {
-        return (
-          x.indexOf(`/${tokens[0]}`) !== -1 &&
-          x.split("/").slice(1).length === tokens.length
-        );
-      })[0];
-
-      if (found) {
-        found
-          .split("/")
-          .slice(2)
-          .forEach((n, x) => {
-            params[n.slice(1)] = tokens[x + 1];
-          });
-        await setRoute(found, { params });
-        return { path: pathName, route: found, query, params };
+        if (found) {
+          found
+            .split("/")
+            .slice(2)
+            .forEach((n, x) => {
+              params[n.slice(1)] = tokens[x + 1];
+            });
+          await setRoute(found, { params });
+          return { path: pathName, route: found, query, params };
+        } else {
+          // Not found
+          app._currentRoute = opts.notFoundRouteName;
+          await setRoute(opts.notFoundUrl);
+          return { path: pathName, route: undefined, query, params };
+        }
       }
-      // Not found
-      app._currentRoute = opts.notFoundRouteName;
-      await setRoute(opts.notFoundUrl);
-      return { path: pathName, route: undefined, query, params };
     },
     boot: async () => {
       // Runs on startup. Intended to be monkey patched in plugins.
@@ -498,10 +508,6 @@ export default async (options) => {
       if (opts.debug) {
         console.log("[debug] Initial app state", app.getState());
       }
-
-      window.onpopstate = async () => {
-        await app.navigate(window.location.pathname);
-      };
 
       app.global = opts.global;
       window[opts.global] = window[opts.global] || {};
@@ -555,18 +561,18 @@ export default async (options) => {
   app.ctx = getProxy(app);
 
   // waiting for plugins
-  Object.keys(cache._waiting.plugins).forEach(key => {
+  Object.keys(cache._waiting.plugins).forEach((key) => {
     let waiting = cache._waiting[key];
-    let plugin = app.ctx ? app.ctx[key] : null;
+    let plugin = app.ctx[key];
     if (!plugin) {
       console.warn(`Waiting for "${key}", but does not exist as a plugin?`);
       return;
     }
-    waiting.forEach(item => {
+    waiting.forEach((item) => {
       item(plugin, app);
     });
   });
-  cache._waiting = {};  
+  cache._waiting = {};
 
   if (opts.node && (rules.isElement(opts.node) || rules.isNode(opts.node))) {
     return mount(opts.node);

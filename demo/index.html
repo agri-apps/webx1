@@ -142,7 +142,7 @@
                 '/': {
                     view: ({ message }) => `<div class="page home-page"><h1></h1></div>`,
                     init: ({ message }, ctx) => {
-
+                        console.log('home rendered')
                         // example plugin usage
                         ctx.typer.typeIt(document.querySelector('h1'), message, 50);
                         ctx.toast.show(ctx.i18n.translate('welcome'), { delay: 1000, position: 'bottom center', theme: 'success' });                        
@@ -270,7 +270,7 @@
                 [window.webx1StorePlugin, {
                     stores: {
                         'foo': {
-                            state: async(app) => ({ items: [], xtra: app.debug }),
+                            state: async() => ({ items: [] }),
                             mutations: {
                                 addFoo: [(state, payload) => {
                                     return { items: [...state.items, payload] };

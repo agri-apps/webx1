@@ -29,7 +29,7 @@ export default {
           }
           return prev;
         }, {});
-        let links = [].slice.call(rootEl.querySelectorAll("a[data-route]"));
+        let links = [].slice.call(rootEl.querySelectorAll("a[data-route]:not([data-bound])"));
   
         links.forEach((anchor) => {
           let routeName = anchor.dataset["route"];
@@ -63,6 +63,8 @@ export default {
               }
             }
           });
+
+          anchor.dataset['bound'] = true;
         });
       };
   
