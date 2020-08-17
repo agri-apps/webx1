@@ -30,35 +30,7 @@ export default async (options) => {
       }),
     },
   };
-
-  // routes
-  // if (!rules.isEmptyObject(opts.routes)) {
-  //   // prevalidate routes
-  //   let routeErrors = {};
-  //   for (var x in opts.routes) {
-  //     if (opts.routes.hasOwnProperty(x)) {
-  //       let route = opts.routes[x];
-  //       if (rules.isFunc(route)) {
-  //         route = await route() || { view: () => `<div>???</div>`, name: 'missing' }
-  //         // default export check
-  //         if (!route.view) {
-  //           if (route.default) {
-  //             route = route.default;
-  //           }
-  //         }
-  //       }
-  //       if (!route.view) {
-  //         routeErrors[x] = [`A view property is required for route "${x}"`];
-  //       }
-  //     }
-  //   }
-  //   if (Object.keys(routeErrors).length) {
-  //     if (opts.debug) {
-  //       Object.values(routeErrors).forEach(val => console.error(val));
-  //     }
-  //     throw new Error("Invalid route configuration", routeErrors);
-  //   }
-  //}
+  
   cache.routes = Object.assign({}, cache.routes, opts.routes);
 
   const getRoute = async (route) => {
